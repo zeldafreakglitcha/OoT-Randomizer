@@ -2,24 +2,44 @@ Entrance rando work in progress.
 
 Changes:
 
-Dungeons and great faries have their locations randomized with logic. The placement algorithm will guarantee reachability of all dungeons for their respective target ages (note: DC is considered adult). This means you will never get a fire temple on Deku etc with unreachable adult-only locations. Spirit is guaranteed reachable by both audlt and child.
+Dungeons and great faries have their locations randomized with logic. The
+placement algorithm will guarantee reachability of all dungeons for their
+respective target ages (note: DC is considered adult). This means you will
+never get a fire temple on Deku etc with unreachable adult-only locations.
+Spirit is guaranteed reachable by both audlt and child.
 
-The hyrule castle and ganons castle fairy is considered only one location. This means if you get fairy on the castle fairy check you will not need strength 3 as you have already cleared it. The downside is you may need strength 3 to enter whatever dungeon lands there when you peek it as child. This is an implementation limitation rather than a design descision.
+The hyrule castle and ganons castle fairy is considered only one location.
+This means if you get fairy on the castle fairy check you will not need
+strength 3 as you have already cleared it. The downside is you may need strength
+3 to enter whatever dungeon lands there when you peek it as child. This is an
+implementation limitation rather than a design descision.
 
-The iron knuckle doors in Spirit are converted to great-faries. This avoids the player being able to reach the desert colossus from a spirit temple that is not at the colossus. Spirit temple logic is adjusted for the extra ZL requirements and longshotting accross the hands is removed from logic. The hands of spirit are inaccessible (without glitches) and are removed from the location list. They will have their vanilla items if you glitch your way there.
+The iron knuckle doors in Spirit are converted to great-faries. This avoids
+the player being able to reach the desert colossus from a spirit temple that is
+not at the colossus. Spirit temple logic is adjusted for the extra ZL
+requirements and longshotting accross the hands is removed from logic. The hands
+of spirit are inaccessible (without glitches) and are removed from the location
+list. They will have their vanilla items if you glitch your way there.
 
 Known issues:
 
 There is no UI. Entrance rando is hard-coded on.
 
-There is no spoiler log integration. The program terminal output will dump some useful JSON showing the world rewiring.
+There is no spoiler log integration. The program terminal output will dump some
+useful JSON showing the world rewiring.
 
-Death warping and save warping in dungeons is broken. Always warp out of dungeons with a song or walk out the front door. If you die in-dungeon, you may respawn at the wrong location. You can safely zone out and continue play but you may be at an out-of-logic location.
+Death warping and save warping in dungeons is broken. Always warp out of
+dungeons with a song or walk out the front door. If you die in-dungeon, you may
+respawn at the wrong location. You can safely zone out and continue play but
+you may be at an out-of-logic location.
 
-Logic is dependent on open forest/door-of-time/kakariko-gate. These settings are compulsory.
+Logic is dependent on open forest/door-of-time/kakariko-gate. These settings
+are compulsory.
 
-I suggest using this settings string to minimize logic bug risk as dev continues:
+I suggest using this settings string to minimize logic bug risk as dev
+continues:
 
 BRGD6ZCEASLDJKEKWMAAAEV2MEBA
 
-Some of the harder minigame checks are removed for convenience, these can be put back in with no logic risk if desired.
+Some of the harder minigame checks are removed for convenience, these can be put
+back in with no logic risk if desired.
