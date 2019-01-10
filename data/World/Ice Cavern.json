@@ -13,7 +13,7 @@
             "GS Ice Cavern Push Block Room": "can_use(Hookshot) and has_bottle"
         },
         "exits": {
-            "Outside Ice Cavern": "True"
+            "Outside Ice Cavern" : "True"
         }
     }
 ]

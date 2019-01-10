@@ -93,6 +93,8 @@ def main(settings, window=dummy_window()):
         for dung in mqd_picks:
             world.dungeon_mq[dung] = True
 
+        entrance_data = os.path.join(data_path('World'), 'Entrances.json')
+        world.load_entrances_from_json(entrance_data)
 
         overworld_data = os.path.join(data_path('World'), 'Overworld.json')
         world.load_regions_from_json(overworld_data)

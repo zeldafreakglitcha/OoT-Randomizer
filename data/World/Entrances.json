@@ -1,0 +1,403 @@
+{
+  "Castle Town->Castle Town Bazaar": {
+    "access": "C",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h052C",
+      "return_index": "h03B8"
+    }
+  },
+  "Castle Town->Castle Town Bombchu Bowling": {
+    "access": "C",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h0507",
+      "return_index": "h03BC"
+    }
+  },
+  "Castle Town->Castle Town Bombchu Shop": {
+    "access": "C",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h0528",
+      "return_index": "h03C0"
+    }
+  },
+  "Castle Town->Castle Town Mask Shop": {
+    "access": "C",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h0530",
+      "return_index": "h01D1"
+    }
+  },
+  "Castle Town->Castle Town Rupee Room": {
+    "access": "AC",
+    "reqs": "AC",
+    "z_implementation": {
+        "forward_index": "h007E",
+        "return_index": "h026E"
+    }
+  },
+  "Castle Town->Castle Town Potion Shop": {
+    "access": "C",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h0388",
+      "return_index": "h02A2"
+    }
+  },
+  "Castle Town->Castle Town Shooting Gallery": {
+    "access": "C",
+    "reqs": "C",
+    "z_implementation": {
+      "forward_index": "h016D",
+      "return_index": "h01CD"
+    }
+  },
+  "Castle Town->Castle Town Treasure Chest Game": {
+    "access": "C",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h0063",
+      "return_index": "h01D5"
+    }
+  },
+  "Death Mountain Crater Central->Fire Temple Lower": {
+    "access": "A",
+    "reqs": "A",
+    "dungeon": "True",
+    "z_implementation": {
+      "forward_index": "h0165",
+      "return_index": [ "h024A", "h0564" ]
+    }
+  },
+  "Death Mountain->Dodongos Cavern Beginning": {
+    "access": "AC",
+    "reqs": "A",
+    "dungeon": "True",
+    "z_implementation": {
+      "forward_index": "h0004",
+      "return_index": "h0242"
+    }
+  },
+  "Forest Temple Entry Area->Forest Temple First Room": {
+    "access": "A",
+    "reqs": "A",
+    "dungeon": "True",
+    "z_implementation": {
+      "forward_index": "h0169",
+      "return_index": [ "h0215", "h0608" ]
+    }
+  },
+  "Gerudo Fortress->Gerudo Training Grounds Lobby": {
+    "access": "A",
+    "reqs": "A",
+    "dungeon": "True",
+    "z_implementation": {
+      "forward_index": "h0008",
+      "return_index": "h03A8"
+    }
+  },
+  "Gerudo Valley Far Side->Gerudo Valley Tent": {
+    "access": "A",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h03A0",
+      "return_index": "h03D0"
+    }
+  },
+  "Goron City->Goron Shop": {
+    "access": "C",
+    "reqs": "A",
+    "z_implementation": {
+      "forward_index": "h037C",
+      "return_index": "h03FC"
+    }
+  },
+  "Graveyard->Composer Grave": {
+    "access": "AC",
+    "reqs": "A",
+    "z_implementation": {
+      "forward_index": [ "h002D", 6 ],
+      "return_index": "h050B"
+    }
+  },
+  "Graveyard->Dampes House": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h030D",
+      "return_index": "h0355"
+    }
+  },
+  "Graveyard->Heart Piece Grave": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h031C",
+      "return_index": "h0361"
+    }
+  },
+  "Graveyard->Shield Grave": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h004B",
+      "return_index": "h035D"
+    }
+  },
+  "Kakariko Village->Bottom of the Well Entry": {
+    "access": "C",
+    "reqs": "C",
+    "dungeon": "True",
+    "z_implementation": {
+      "forward_index": "h0098",
+      "return_index": "h02A6"
+    }
+  },
+  "Kakariko Village->Carpenter Boss House": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h02FD",
+      "return_index": "h0349"
+    }
+  },
+  "Kakariko Village->House of Skulltula": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h0550",
+      "return_index": "h04EE"
+    }
+  },
+  "Kakariko Village->Impas House": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h039C",
+      "return_index": "h0345"
+    }
+  },
+  "Kakariko Village->Impas House Back": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h05C8",
+      "return_index": "h05DC"
+    }
+  },
+  "Kakariko Village->Kakariko Bazaar": {
+    "access": "A",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h00B7",
+      "return_index": "h0201"
+    }
+  },
+  "Kakariko Village->Kakariko Shooting Gallery": {
+    "access": "A",
+    "reqs": "A",
+    "z_implementation": {
+      "forward_index": "h003B",
+      "return_index": "h0463"
+    }
+  },
+  "Kakariko Village->Odd Medicine Building": {
+    "access": "A",
+    "reqs": "A",
+    "z_implementation": {
+      "forward_index": "h0072",
+      "return_index": "h034D"
+    }
+  },
+  "Kokiri Forest->Deku Tree Lobby": {
+    "access": "C",
+    "reqs": "C",
+    "dungeon": "True",
+    "z_implementation": {
+      "forward_index": "h0000",
+      "return_index": "h0209"
+    }
+  },
+  "Kokiri Forest->House of Twins": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h009C",
+      "return_index": "h033C"
+    }
+  },
+  "Kokiri Forest->Know It All House": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h00C9",
+      "return_index": "h026A"
+    }
+  },
+  "Kokiri Forest->Kokiri Shop": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h00C1",
+      "return_index": "h0266"
+    }
+  },
+#  "Kokiri Forest->Mido House": {
+#    "access": "AC",
+#    "reqs": "",
+#    "z_implementation": {
+#      "forward_index": "h0433",
+#      "return_index": "h0443"
+#    }
+#  },
+  "Kokiri Forest->Saria House": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h0437",
+      "return_index": "h0447"
+    }
+  },
+  "Lake Hylia->Fishing Hole": {
+    "access": "AC",
+    "reqs": "AC",
+    "z_implementation": {
+      "forward_index": "h045F",
+      "return_index": "h0309"
+    }
+  },
+  "Lake Hylia->Lake Hylia Lab": {
+    "access": "AC",
+    "reqs": "A",
+    "z_implementation": {
+      "forward_index": "h0043",
+      "return_index": "h03CC"
+    }
+  },
+  "Lake Hylia->Water Temple Lobby": {
+    "access": "A",
+    "reqs": "A",
+    "dungeon": "True",
+    "z_implementation": {
+      "forward_index": "h0010",
+      "return_index": [ "h021D", "h060C" ]
+    }
+  },
+  "Lon Lon Ranch->Ingo Barn": {
+    "access": "AC",
+    "reqs": "",
+    "z_implementation": {
+      "forward_index": "h02F9",
+      "return_index": "h042F"
+    }
+  },
+  "Lon Lon Ranch->Talon House": {
+    "access": "AC",
+    "reqs": "C",
+    "z_implementation": {
+      "forward_index": "h004F",
+      "return_index": "h0378"
+    }
+  },
+  "Lon Lon Ranch->Lon Lon Corner Tower": {
+    "access": "AC",
+    "reqs": "C",
+    "z_implementation": {
+      "forward_index": "h05D0",
+      "return_index": "h05D4"
+    }
+  },
+  "Shadow Temple Warp Region->Shadow Temple Entrance": {
+    "access": "AC",
+    "reqs": "A",
+    "dungeon": "True",
+    "z_implementation": {
+      "forward_index": "h0037",
+      "return_index": [ "h0205", "h0580" ]
+    }
+  },
+  "Zoras Domain->Zora Shop": {
+    "access": "AC",
+    "reqs": "A",
+    "z_implementation": {
+      "forward_index": "h0380",
+      "return_index": "h03C4"
+    }
+  },
+  "Outside Ice Cavern->Ice Cavern": {
+    "access": "A",
+    "reqs": "A",
+    "dungeon": "True",
+    "z_implementation": {
+      "forward_index": [ "h0088", 5 ],
+      "return_index": "h03D4"
+    }
+  },
+  "Zoras Fountain->Jabu Jabus Belly Beginning": {
+    "access": "C",
+    "reqs": "C",
+    "dungeon": "True",
+    "z_implementation": {
+      "forward_index": [ "h0028", 5 ],
+      "return_index": [ "h0221", "h010E" ]
+    }
+  },
+  "Desert Colossus->Spirit Temple Lobby": {
+    "access": "A",
+    "reqs": "AC",
+    "dungeon": "True",
+    "z_implementation": {
+        "forward_index": [ "h0082", 6, "h03F0", "h03F4" ],
+        "return_index": [ "h01E1", "h0610", "h01ED" ]
+    }
+  },
+  "Hyrule Castle Grounds->Hyrule Castle Fairy": {
+    "access": "C",
+    "reqs":"",
+    "fairy":"True",
+    "z_implementation": {
+        #unifies ganons castle fairy in too
+        "forward_index": [ "h0578", "h04C2" ],#check
+        "return_index": [ "h0340", 5 ] #check
+    }
+  },
+  "Zoras Fountain->Zoras Fountain Fairy": {
+    "access": "",
+    "reqs":"",
+    "fairy":"True",
+    "z_implementation": {
+        "forward_index": [ "h0371", 7 ], #check
+        "return_index": "h0394" #check
+    }
+  },
+  "Desert Colossus->Colossus Fairy": {
+    "access": "A",
+    "reqs":"",
+    "fairy":"True",
+    "z_implementation": {
+        "forward_index": "h0588", #check
+        "return_index": "h057C" #check
+    }
+  },
+  "Death Mountain->Mountain Summit Fairy": {
+    "access": "",
+    "reqs":"",
+    "fairy":"True",
+    "z_implementation": {
+        "forward_index": [ "h0315", 7 ], #check
+        "return_index": "h045B" #check
+    }
+  },
+  "Death Mountain Crater Lower->Crater Fairy": {
+    "access": "A",
+    "reqs":"",
+    "fairy":"True",
+    "z_implementation": {
+        "forward_index": "h04BE", #check
+        "return_index": "h0482" #check
+    }
+  }
+}

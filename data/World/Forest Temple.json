@@ -1,15 +1,25 @@
 [    
 	{
-        "region_name": "Forest Temple Lobby",
+        "region_name": "Forest Temple First Room",
         "dungeon": "Forest Temple",
         "locations": {
             "Forest Temple First Chest": "True",
-            "Forest Temple Chest Behind Lobby": "True",
-            "GS Forest Temple First Room": "can_use(Hookshot) or can_use(Bow) or can_use(Dins_Fire)",
-            "GS Forest Temple Lobby": "can_use(Hookshot)"
+            "GS Forest Temple First Room": "can_use(Hookshot) or can_use(Bow) or can_use(Dins_Fire)"
         },
         "exits": {
             "Forest Temple Entry Area": "True",
+            "Forest Temple Lobby": "True"
+        }
+	},
+{
+        "region_name": "Forest Temple Lobby",
+        "dungeon": "Forest Temple",
+        "locations": {
+            "Forest Temple Chest Behind Lobby": "True",
+            "GS Forest Temple Lobby": "can_use(Hookshot)"
+        },
+        "exits": {
+            "Forest Temple First Room": "True",
             "Forest Temple NW Outdoors": "can_play(Song_of_Time)",
             "Forest Temple NE Outdoors": "can_use(Bow)",
             "Forest Temple Block Push Room": "(Small_Key_Forest_Temple, 1)"
@@ -33,7 +43,7 @@
         "region_name": "Forest Temple NE Outdoors",
         "dungeon": "Forest Temple",
         "locations": {
-            "Forest Temple Outside Hookshot Chest": "True",
+            "Forest Temple Outside Hookshot Chest": "can_use(Hookshot)",
             "GS Forest Temple Outdoor East": "can_use(Hookshot)"
         },
         "exits": {

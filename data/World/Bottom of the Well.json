@@ -1,4 +1,12 @@
-[    
+[   
+  {
+        "region_name": "Bottom of the Well Entry", 
+        "dungeon": "Bottom of the Well",
+        "exits": {
+                "Kakariko Village": "true",
+                "Bottom of the Well": "can_child_attack or has_nuts"
+        }
+  },
 	{
         "region_name": "Bottom of the Well",
         "dungeon": "Bottom of the Well",
@@ -37,7 +45,7 @@
             "Bottom of the Well Stick Pot": "True"
         },
         "exits": {
-            "Kakariko Village": "True"
+            "Bottom of the Well Entry": "True"
         }
     }
 ]

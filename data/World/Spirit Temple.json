@@ -1,7 +1,10 @@
-[    
+[
 	{
         "region_name": "Spirit Temple Lobby",
         "dungeon": "Spirit Temple",
+        "locations": {
+            "Sheik at Colossus": "True"
+        },
         "exits": {
             "Desert Colossus": "True",
             "Child Spirit Temple": "can_play(Requiem_of_Spirit)",
@@ -125,20 +128,32 @@
                 (Progressive_Hookshot or Hover_Boots)"
         },
         "exits": {
-            "Spirit Temple Outdoor Hands": "True",
+            "Spirit Temple Adult Fairy": "
+                (Small_Key_Spirit_Temple, 4) and can_use(Silver_Gauntlets) and has_explosives",
+            "Spirit Temple Child Fairy": "(Small_Key_Spirit_Temple, 5)",
             "Spirit Temple Beyond Central Locked Door": "
                 (Small_Key_Spirit_Temple, 4) and can_use(Silver_Gauntlets)",
             "Child Spirit Temple Climb": "True"
         }
     },
     {
-        "region_name": "Spirit Temple Outdoor Hands",
+        "region_name": "Spirit Temple Adult Fairy",
+        "dungeon": "Spirit Temple",
         "locations": {
-            "Silver Gauntlets Chest": "
-                ((Small_Key_Spirit_Temple, 3) and (Progressive_Hookshot, 2) and has_explosives) or 
-                (Small_Key_Spirit_Temple, 5)",
-            "Mirror Shield Chest": "
-                (Small_Key_Spirit_Temple, 4) and can_use(Silver_Gauntlets) and has_explosives"
+            "Spirit Temple Adult Fairy Reward":"can_play(Zeldas_Lullaby)"
+        },
+        "exits":{
+            "Spirit Temple Central Chamber":"True"
+        }
+    },
+    {
+        "region_name": "Spirit Temple Child Fairy",
+        "dungeon": "Spirit Temple",
+        "locations": {
+            "Spirit Temple Child Fairy Reward":"can_play(Zeldas_Lullaby)"
+        },
+        "exits":{
+            "Spirit Temple Central Chamber":"True"
         }
     },
     {

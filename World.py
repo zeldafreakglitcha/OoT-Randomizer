@@ -13,6 +13,7 @@ import copy
 import io
 import json
 import random
+import re
 
 class World(object):
 
@@ -29,6 +30,7 @@ class World(object):
         self.required_locations = []
         self.shop_prices = {}
         self.scrub_prices = {}
+        self.entrances = {}
         self.light_arrow_location = None
 
         # dump settings directly into world's namespace
@@ -98,12 +100,77 @@ class World(object):
         return new_world
 
 
+    def load_entrances_from_json(self, entrance_path):
+        json_string = ""
+        with io.open(entrance_path, 'r') as file:
+            for line in file.readlines():
+                json_string += line.split('#')[0].replace('\n', ' ')
+        json_string = re.sub(' +', ' ', json_string)
+        try:
+            self.entrances = json.loads(json_string)
+        except json.JSONDecodeError as error:
+            print("JSON parse error around text:\n" + json_string[error.pos-35:error.pos+35])
+            print("                                   ^^\n")
+            raise error
+
+        for key in list(self.entrances):
+            if not "dungeon" in self.entrances[key] and\
+               not "fairy" in self.entrances[key]:
+                self.entrances.pop(key)
+
+        selectors = list(self.entrances)
+        random.shuffle(selectors)
+        choices = list(self.entrances)
+
+        #Pass 1 - Must-AC links are the most restrictive only allowed on Vanilla-AC sites
+        for key in list(selectors):
+            if self.entrances[key]["reqs"] == "AC":
+                while True:
+                    #Need to plug into seed RNG
+                    cand = random.choice(choices)
+                    if self.entrances[cand]["access"] == "AC":
+                        self.entrances[cand]["actual"] = key
+                        self.entrances[cand]["actual_reqs"] = "AC"
+                        self.entrances[key]["on"] = cand;
+                        choices.remove(cand)
+                        break
+                selectors.remove(key)
+        
+        #Pass 2 - Either specifically child or specifically adult must get here
+        #Do them together to avoid bias
+        for key in list(selectors):
+            req = self.entrances[key]["reqs"]
+            if req == "A" or req == "C":
+                while True:
+                    cand = random.choice(choices)
+                    if req in self.entrances[cand]["access"]:
+                        self.entrances[cand]["actual"] = key
+                        self.entrances[cand]["actual_reqs"] = req
+                        self.entrances[key]["on"] = cand;
+                        choices.remove(cand)
+                        break
+                selectors.remove(key)
+
+        #Pass 3 - The rest, We just have to get here, don't care if its child or adult
+        for key in selectors:
+            cand = random.choice(choices)
+            self.entrances[cand]["actual"] = key
+            self.entrances[cand]["actual_reqs"] = ""
+            self.entrances[key]["on"] = cand;
+            choices.remove(cand)
+
     def load_regions_from_json(self, file_path):
         json_string = ""
         with io.open(file_path, 'r') as file:
             for line in file.readlines():
                 json_string += line.split('#')[0].replace('\n', ' ')
-        region_json = json.loads(json_string)
+        json_string = re.sub(' +', ' ', json_string)
+        try:
+            region_json = json.loads(json_string)
+        except json.JSONDecodeError as error:
+            print("JSON parse error around text:\n" + json_string[error.pos-35:error.pos+35])
+            print("                                   ^^\n")
+            raise error
 
         for region in region_json:
             new_region = Region(region['region_name'])
@@ -120,6 +187,19 @@ class World(object):
                     new_region.locations.append(new_location)
             if 'exits' in region:
                 for exit, rule in region['exits'].items():
+                    found = False;
+                    link = new_region.name + "->" + exit
+                    if link in self.entrances:
+                        e = exit
+                        exit = self.entrances[link]["actual"].split('->')[1]
+                        self.entrances[link]["link_rewired"] = "True"
+                        found = True;
+                    rlink = exit + "->" + new_region.name
+                    if rlink in self.entrances:
+                        e = exit
+                        exit = self.entrances[rlink]["on"].split('->')[0]
+                        self.entrances[rlink]["rlink_rewired"] = "True"
+                        found = True;
                     new_exit = Entrance('%s -> %s' % (new_region.name, exit), new_region)
                     new_exit.connected_region = exit
                     if self.logic_rules != 'none':
@@ -129,6 +209,16 @@ class World(object):
 
 
     def initialize_entrances(self):
+
+        print("--------------------------------------")
+        print(json.dumps(self.entrances, indent=2))
+        print("--------------------------------------")
+
+        for entrance in self.entrances:
+            if not "link_rewired" in self.entrances[entrance] or\
+               not "link_rewired" in self.entrances[entrance]:
+                print("WARNING: no zone rewire for " + entrance  + " " + json.dumps(self.entrances[entrance], indent=2))
+
         for region in self.regions:
             for exit in region.exits:
                 exit.connect(self.get_region(exit.connected_region))        

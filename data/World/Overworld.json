@@ -319,7 +319,6 @@
         "locations": {
             "Colossus Freestanding PoH": "
                 can_play(Requiem_of_Spirit) and can_use(Magic_Bean)",
-            "Sheik at Colossus": "True",
             "GS Desert Colossus Bean Patch": "
                 has_bottle and can_play(Requiem_of_Spirit) and can_child_attack",
             "GS Desert Colossus Tree": "can_use(Hookshot) and nighttime",
@@ -403,7 +402,9 @@
         "exits": {
             "Castle Town": "True",
             "Hyrule Castle Garden": "Weird_Egg or (not shuffle_weird_egg)",
-            "Hyrule Castle Fairy": "has_explosives",
+            #FIXME: Logic is way too conservative
+            "Hyrule Castle Fairy": "
+                has_explosives and can_use(Golden_Gauntlets)",
             "Castle Storms Grotto": "can_play(Song_of_Storms)"
         }
     },
@@ -430,7 +431,6 @@
         },
         "exits": {
             "Castle Town": "True",
-            "Ganons Castle Fairy": "can_use(Golden_Gauntlets)",
             "Ganons Castle Lobby": "
                 (bridge == 'open')
                 or ((bridge == 'medallions') and
@@ -446,12 +446,6 @@
                     Kokiri_Emerald and Goron_Ruby and Zora_Sapphire)
                 or ((bridge == 'tokens') and
                     (Gold_Skulltula_Token, 100))"
-        }
-    },
-    {
-        "region_name": "Ganons Castle Fairy",
-        "locations": {
-            "Ganons Castle Fairy Reward": "can_play(Zeldas_Lullaby)"
         }
     },
     {
@@ -558,9 +552,7 @@
             "Windmill": "True",
             "Kakariko Bazaar": "is_adult",
             "Kakariko Shooting Gallery": "True",
-            "Bottom of the Well": "
-                can_play(Song_of_Storms) and 
-                (dungeon_mq[Bottom_of_the_Well] or can_child_attack or has_nuts)",
+            "Bottom of the Well Entry": "can_play(Song_of_Storms)",
             "Kakariko Potion Shop Front": "is_adult",
             "Kakariko Potion Shop Back": "is_adult",
             "Odd Medicine Building": "True",
@@ -703,9 +695,7 @@
         },
         "exits": {
             "Graveyard": "True",
-            "Shadow Temple Beginning": "
-                can_use(Dins_Fire) and can_see_with_lens and 
-                (can_use(Hover_Boots) or can_use(Hookshot))"
+            "Shadow Temple Entrance": "can_use(Dins_Fire)"
         }
     },
     {
@@ -730,17 +720,11 @@
             "Goron City": "True",
             "Death Mountain Crater Upper": "can_blast_or_smash",
             "Mountain Summit Fairy": "can_blast_or_smash",
-            "Dodongos Cavern Entryway": "
-                has_explosives or Progressive_Strength_Upgrade or is_adult",
+            #Conservative logic, so child can get in
+            "Dodongos Cavern Beginning": "
+                has_explosives or Progressive_Strength_Upgrade",
             "Mountain Bombable Grotto": "can_blast_or_smash",
             "Mountain Storms Grotto": "can_play(Song_of_Storms)"
-        }
-    },
-    {
-        "region_name": "Dodongos Cavern Entryway",
-        "exits": {
-            "Dodongos Cavern Beginning": "True",
-            "Death Mountain": "True"
         }
     },
     {
@@ -1099,7 +1083,7 @@
         },
         "exits": {
             "Lost Woods": "True",
-            "Forest Temple Lobby": "can_use(Hookshot)",
+            "Forest Temple First Room": "can_use(Hookshot)",
             "Meadow Storms Grotto": "can_play(Song_of_Storms)",
             "Sacred Forest Meadow Gossip Stones": "hints != 'mask'"
         }

@@ -22,8 +22,6 @@ location_table = {
     "Haunted Wasteland Structure Chest":               ("Chest",       0x5E,  0x00, "Haunted Wasteland",      None),
     "Redead Grotto Chest":                             ("Chest",       0x3E,  0x0A, "Kakariko Village",       None),
     "Wolfos Grotto Chest":                             ("Chest",       0x3E,  0x11, "Sacred Forest Meadow",   None),
-    "Silver Gauntlets Chest":                          ("Chest",       0x5C,  0x0B, "Desert Colossus",        None),
-    "Mirror Shield Chest":                             ("Chest",       0x5C,  0x09, "Desert Colossus",        None),
     "Field West Castle Town Grotto Chest":             ("Chest",       0x3E,  0x00, "Hyrule Field",           None),
     "Remote Southern Grotto Chest":                    ("Chest",       0x3E,  0x02, "Hyrule Field",           None),
     "Field Near Lake Outside Fence Grotto Chest":      ("Chest",       0x3E,  0x03, "Hyrule Field",           None),
@@ -42,7 +40,8 @@ location_table = {
     "Desert Colossus Fairy Reward":                    ("Cutscene",    0xFF,  0x12, "Desert Colossus",        None),
     "Mountain Summit Fairy Reward":                    ("Cutscene",    0xFF,  0x13, "Death Mountain Trail",   None),
     "Crater Fairy Reward":                             ("Cutscene",    0xFF,  0x14, "Death Mountain Crater",  None),
-    "Ganons Castle Fairy Reward":                      ("Cutscene",    0xFF,  0x15, "outside Ganon's Castle", None),
+    "Spirit Temple Adult Fairy Reward":                ("Cutscene",    0xFF,  0x15, "Spirit Temple",          None),
+    "Spirit Temple Child Fairy Reward":                ("Cutscene",    0xFF,  0x16, "Spirit Temple",          None),
 
     "Sheik Forest Song":                               ("Song",        0xFF,  0x20, "Sacred Forest Meadow",   (0x20B0809, 0x20B0809)),
     "Sheik in Crater":                                 ("Song",        0xFF,  0x21, "Death Mountain Crater",  (0x224D7F1, 0x224D7F1)),

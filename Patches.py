@@ -649,6 +649,60 @@ def patch_rom(spoiler:Spoiler, world:World, rom:LocalRom):
     for address in Short_item_descriptions:
         rom.write_byte(address,0x02)
 
+    def write_entrance1(index, data4, n=1):
+        for i in range(n):
+            rom.write_bytes(0xB6FBF0 + (index + i) * 4, data4)
+
+    #Make the sprit temple hands great fairies
+    rom.write_bytes(0xBEFD6E, [0x03, 0x69])
+    rom.write_bytes(0xBEFD6C, [0x03, 0xF8])
+
+    write_entrance1(0x01E5, [0x3B, 0x03, 0x41, 0x02], 4)
+    write_entrance1(0x0369, [0x06, 0x02, 0x01, 0x02], 4)
+
+    write_entrance1(0x01E9, [0x3B, 0x02, 0x41, 0x02], 4)
+    write_entrance1(0x03F8, [0x06, 0x03, 0x01, 0x02], 4)
+
+    et_original = rom.read_bytes(0xB6FBF0, 4 * 0x0614)
+
+    def write_entrance(target_index, target_length, data):
+        if isinstance(data, str):
+            data = [ data ]
+        data_index = int(data[0][1:], 16)
+        for i in range(0, target_length):
+            di = data_index
+            if i < 4:
+                di = di + i
+            di = di * 4
+            write_entrance1(target_index + i, et_original[di:di+4])
+
+    def write_entrances(index, data):
+        offset = 0
+        target_index = -1
+        if isinstance(index, str):
+            index = [ index ]
+        if isinstance(index[-1], str):
+            index.append(4)
+        for i in range(len(index)):
+            if target_index != -1:
+                if isinstance(index[i], int):
+                    target_length = int(index[i])
+                else:
+                    target_length = 4
+                write_entrance(target_index, target_length, data)
+                target_index = -1
+            if isinstance(index[i], str):
+                target_index=int(index[i][1:], 16)
+
+    for key, original in world.entrances.items():
+        actual = world.entrances[original["actual"]]
+        zone_in_index = original["z_implementation"]["forward_index"]
+        zone_in_data = actual["z_implementation"]["forward_index"]
+        zone_out_index = actual["z_implementation"]["return_index"]
+        zone_out_data = original["z_implementation"]["return_index"]
+        write_entrances(zone_in_index, zone_in_data)
+        write_entrances(zone_out_index, zone_out_data)
+
     # Fix text for Pocket Cucco.
     rom.write_byte(0xBEEF45, 0x0B)
 
