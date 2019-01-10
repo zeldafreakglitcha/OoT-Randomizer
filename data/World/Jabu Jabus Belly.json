@@ -1,11 +1,26 @@
 [
     {
-        "region_name": "Jabu Jabus Belly Beginning",
+        "region_name": "Adult JJB",
         "dungeon": "Jabu Jabus Belly",
         "exits": {
             "Zoras Fountain": "True",
+            "Jabu Jabus Belly Beginning": "True"
+        }
+    },
+    {
+        "region_name": "Child JJB",
+        "dungeon": "Jabu Jabus Belly",
+        "exits": {
+            "Zoras Fountain": "True",
+            "Jabu Jabus Belly Beginning": "True"
+        }
+    },
+    {
+        "region_name": "Jabu Jabus Belly Beginning",
+        "dungeon": "Jabu Jabus Belly",
+        "exits": {
             "Jabu Jabus Belly Main": "
-                has_slingshot or has_explosives or Boomerang"
+                has_projectile(either, Adult_JJB, Child_JJB)"
         }
     },
     {
@@ -14,11 +29,13 @@
         "locations": {
             "Boomerang Chest": "True",
             "GS Jabu Jabu Water Switch Room": "True",
-            "Jabu Deku Scrub Deku Nuts": "True"
+            #Adult diving for this scrub is bugged, but this could be weaker
+            "Jabu Deku Scrub Deku Nuts": "can_reach(Child_JJB)"
         },
         "exits": {
             "Jabu Jabus Belly Beginning": "True",
-            "Jabu Jabus Belly Depths": "Boomerang"
+            "Jabu Jabus Belly Depths": "
+                can_use(Boomerang) and can_reach(Child_JJB)"
         }
     },
     {

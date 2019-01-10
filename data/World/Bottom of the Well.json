@@ -1,13 +1,20 @@
 [   
-  {
-        "region_name": "Bottom of the Well Entry", 
+    {
+        "region_name": "Adult BotW", 
         "dungeon": "Bottom of the Well",
         "exits": {
-                "Kakariko Village": "true",
+                "Kakariko Village": "True"
+        }
+    },
+    {
+        "region_name": "Child BotW", 
+        "dungeon": "Bottom of the Well",
+        "exits": {
+                "Kakariko Village": "True",
                 "Bottom of the Well": "can_child_attack or has_nuts"
         }
-  },
-	{
+    },
+    {
         "region_name": "Bottom of the Well",
         "dungeon": "Bottom of the Well",
         "locations": {
@@ -43,9 +50,6 @@
             "GS Well Like Like Cage": "
                 (Small_Key_Bottom_of_the_Well, 3) and Boomerang and can_see_with_lens",
             "Bottom of the Well Stick Pot": "True"
-        },
-        "exits": {
-            "Bottom of the Well Entry": "True"
         }
     }
 ]

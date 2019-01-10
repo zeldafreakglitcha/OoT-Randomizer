@@ -1,12 +1,19 @@
 [    
-	  {
-        "region_name": "Shadow Temple Entrance",
+    {
+        "region_name": "Adult ShT",
         "dungeon": "Shadow Temple",
-        "exits" : { 
+        "exits": {
             "Shadow Temple Warp Region": "True",
             "Shadow Temple Beginning": "
                 can_see_with_lens and 
                 (can_use(Hover_Boots) or can_use(Hookshot))"
+        }
+    },
+    {
+        "region_name": "Child ShT",
+        "dungeon": "Shadow Temple",
+        "exits": {
+            "Shadow Temple Warp Region": "True"
         }
     },
     {
@@ -17,7 +24,6 @@
             "Shadow Temple Hover Boots Chest": "True"
         },
         "exits": {
-            "Shadow Temple Entrance": "True",
             "Shadow Temple First Beamos": "Hover_Boots"
         }
     },

@@ -114,6 +114,8 @@ class World(object):
             raise error
 
         for key in list(self.entrances):
+            if not "name" in self.entrances[key]:
+                self.entrances[key]["name"] = key.split('->')[1]
             if not "dungeon" in self.entrances[key] and\
                not "fairy" in self.entrances[key]:
                 self.entrances.pop(key)
@@ -159,6 +161,10 @@ class World(object):
             self.entrances[key]["on"] = cand;
             choices.remove(cand)
 
+        for entrance in self.entrances:
+            self.entrances[entrance]["link_rewired"] = 0
+            self.entrances[entrance]["rlink_rewired"] = 0
+
     def load_regions_from_json(self, file_path):
         json_string = ""
         with io.open(file_path, 'r') as file:
@@ -171,6 +177,13 @@ class World(object):
             print("JSON parse error around text:\n" + json_string[error.pos-35:error.pos+35])
             print("                                   ^^\n")
             raise error
+
+        def child_adult_prefix(region):
+            if region.startswith('Child ') or region.startswith('Adult '):
+               return region[:6]
+
+        def remove_child_adult_prefix(region):
+            return region[6:]
 
         for region in region_json:
             new_region = Region(region['region_name'])
@@ -187,19 +200,16 @@ class World(object):
                     new_region.locations.append(new_location)
             if 'exits' in region:
                 for exit, rule in region['exits'].items():
-                    found = False;
-                    link = new_region.name + "->" + exit
+                    link = new_region.name + "->" + remove_child_adult_prefix(exit)
                     if link in self.entrances:
-                        e = exit
-                        exit = self.entrances[link]["actual"].split('->')[1]
-                        self.entrances[link]["link_rewired"] = "True"
-                        found = True;
-                    rlink = exit + "->" + new_region.name
+                        exit = child_adult_prefix(exit) + self.entrances[link]["actual"].split('->')[1]
+                        self.entrances[link]["link_rewired"] = \
+                            self.entrances[link]["link_rewired"] + 1
+                    rlink = exit + "->" + remove_child_adult_prefix(new_region.name)
                     if rlink in self.entrances:
-                        e = exit
                         exit = self.entrances[rlink]["on"].split('->')[0]
-                        self.entrances[rlink]["rlink_rewired"] = "True"
-                        found = True;
+                        self.entrances[rlink]["rlink_rewired"] = \
+                            self.entrances[rlink]["rlink_rewired"] + 1
                     new_exit = Entrance('%s -> %s' % (new_region.name, exit), new_region)
                     new_exit.connected_region = exit
                     if self.logic_rules != 'none':
@@ -210,13 +220,9 @@ class World(object):
 
     def initialize_entrances(self):
 
-        print("--------------------------------------")
-        print(json.dumps(self.entrances, indent=2))
-        print("--------------------------------------")
-
         for entrance in self.entrances:
-            if not "link_rewired" in self.entrances[entrance] or\
-               not "link_rewired" in self.entrances[entrance]:
+            if self.entrances[entrance]["link_rewired"] != 2 or\
+               self.entrances[entrance]["rlink_rewired"] != 2:
                 print("WARNING: no zone rewire for " + entrance  + " " + json.dumps(self.entrances[entrance], indent=2))
 
         for region in self.regions:

@@ -21,6 +21,8 @@
                 (open_forest and 
                     (is_adult or has_slingshot or has_sticks or 
                         has_explosives or Kokiri_Sword or can_use(Dins_Fire)))",
+            "Deku Tree Gossip Stone (Left)": "True",
+            "Deku Tree Gossip Stone (Right)": "True",
             "Kokiri Forest Gossip Stone": "True"
         },
         "exits": {
@@ -30,7 +32,8 @@
             "House of Twins": "True",
             "Know It All House": "True",
             "Kokiri Shop": "True",
-            "Deku Tree Lobby": "(Kokiri_Sword and Buy_Deku_Shield) or open_forest",
+            "Child DT": "(Kokiri_Sword and Buy_Deku_Shield) or open_forest",
+            "Adult DT": "False",
             "Lost Woods": "True",
             "Lost Woods Bridge": "can_leave_forest",
             "Kokiri Forest Storms Grotto": "can_play(Song_of_Storms)"
@@ -222,11 +225,13 @@
         },
         "exits": {
             "Hyrule Field": "True",
+            "Zoras Domain": "can_dive",
             "Lake Hylia Lab": "True",
             "Fishing Hole": "True",
-            "Water Temple Lobby": "
+            "Adult WT": "
                 (Iron_Boots or (logic_morpha_with_scale and (Progressive_Scale, 2))) and 
                 can_use(Hookshot) and (logic_fewer_tunic_requirements or has_ZoraTunic)",
+            "Child WT": "False",
             "Lake Hylia Grotto": "can_stun_deku"
         }
     },
@@ -298,8 +303,9 @@
         "exits": {
             "Haunted Wasteland": "
                 Carpenter_Rescue and (can_use(Hover_Boots) or can_use(Longshot))",
-            "Gerudo Training Grounds Lobby": "
-                Carpenter_Rescue and Gerudo_Membership_Card and is_adult"
+            "Adult GTG": "
+                Carpenter_Rescue and Gerudo_Membership_Card and is_adult",
+            "Child GTG": "False"
         }
     },
     {
@@ -326,11 +332,27 @@
                     can_use(Longshot)) and nighttime"
         },
         "exits": {
-            "Colossus Fairy": "has_explosives",
-            "Spirit Temple Lobby": "True",
+            "Adult Colossus Fairy": "is_adult and has_explosives",
+            "Child Colossus Fairy": "can_play(Requiem_of_Spirit) and has_explosives",
+            "Adult SpT": "is_adult",
+            "Child SpT": "can_play(Requiem_of_Spirit)",
             "Desert Colossus Grotto": "can_use(Silver_Gauntlets)",
             "Desert Colossus Gossip Stone": "
                 hints != 'mask' or can_play(Requiem_of_Spirit)"
+        }
+    },
+    {
+        "region_name": "Adult Colossus Fairy",
+        "exits": {
+            "Desert Colossus": "True",
+            "Colossus Fairy": "True"
+        }
+    },
+    {
+        "region_name": "Child Colossus Fairy",
+        "exits": {
+            "Desert Colossus": "True",
+            "Colossus Fairy": "True"
         }
     },
     {
@@ -401,9 +423,8 @@
         "exits": {
             "Castle Town": "True",
             "Hyrule Castle Garden": "Weird_Egg or (not shuffle_weird_egg)",
-            #FIXME: Logic is way too conservative
-            "Hyrule Castle Fairy": "
-                has_explosives and can_use(Golden_Gauntlets)",
+            "Adult Hyrule Castle Fairy" : "can_use(Golden_Gauntlets)",
+            "Child Hyrule Castle Fairy" : "has_explosives",
             "Castle Storms Grotto": "can_play(Song_of_Storms)"
         }
     },
@@ -415,6 +436,20 @@
         },
         "exits": {
             "Hyrule Castle Grounds": "True"
+        }
+    },
+    {
+        "region_name": "Adult Hyrule Castle Fairy",
+        "exits": {
+            "Hyrule Castle Grounds" : "True",
+            "Hyrule Castle Fairy": "True"
+        }
+    },
+    {
+        "region_name": "Child Hyrule Castle Fairy",
+        "exits": {
+            "Hyrule Castle Grounds" : "True",
+            "Hyrule Castle Fairy": "True"
         }
     },
     {
@@ -551,7 +586,8 @@
             "Windmill": "True",
             "Kakariko Bazaar": "is_adult",
             "Kakariko Shooting Gallery": "True",
-            "Bottom of the Well Entry": "can_play(Song_of_Storms)",
+            "Child BotW": "can_play(Song_of_Storms)",
+            "Adult BotW": "False",
             "Kakariko Potion Shop Front": "is_adult",
             "Kakariko Potion Shop Back": "is_adult",
             "Odd Medicine Building": "True",
@@ -694,7 +730,8 @@
         },
         "exits": {
             "Graveyard": "True",
-            "Shadow Temple Entrance": "can_use(Dins_Fire)"
+            "Adult ShT": "is_adult and can_use(Dins_Fire)",
+            "Child ShT": "can_use(Dins_Fire)"
         }
     },
     {
@@ -718,10 +755,10 @@
             "Kakariko Village": "True",
             "Goron City": "True",
             "Death Mountain Crater Upper": "can_blast_or_smash",
-            "Mountain Summit Fairy": "can_blast_or_smash",
-            #Conservative logic, so child can get in
-            "Dodongos Cavern Beginning": "
-                has_explosives or Progressive_Strength_Upgrade",
+            "Adult Mountain Summit Fairy": "is_adult and can_blast_or_smash",
+            "Child Mountain Summit Fairy": "(is_adult and can_blast_or_smash) or has_explosives",
+            "Child DC": "has_explosives or Progressive_Strength_Upgrade",
+            "Adult DC": "is_adult",
             "Mountain Bombable Grotto": "can_blast_or_smash",
             "Mountain Storms Grotto": "can_play(Song_of_Storms)"
         }
@@ -846,7 +883,8 @@
         "region_name": "Death Mountain Crater Lower",
         "exits": {
             "Goron City": "True",
-            "Crater Fairy": "can_use(Hammer)",
+            "Adult Crater Fairy": "can_use(Hammer)",
+            "Child Crater Fairy": "False",
             "Death Mountain Crater Central": "
                 can_use(Hover_Boots) or can_use(Hookshot)",
             "Death Mountain Crater Upper": "is_adult",
@@ -866,8 +904,9 @@
         "exits": {
             "Death Mountain Crater Lower": "
                 can_use(Hover_Boots) or can_use(Hookshot) or can_use(Magic_Bean)",
-            "Fire Temple Lower": "
-                is_adult and (logic_fewer_tunic_requirements or has_GoronTunic)"
+            "Adult FiT": "
+                is_adult and (logic_fewer_tunic_requirements or has_GoronTunic)",
+            "Child FiT": "False"
         }
     },
     {
@@ -883,9 +922,37 @@
         }
     },
     {
+        "region_name": "Adult Crater Fairy",
+        "exits": {
+            "Death Mountain Crater Lower": "True",
+            "Crater Fairy": "True"
+        }
+    },
+    {
+        "region_name": "Child Crater Fairy",
+        "exits": {
+            "Death Mountain Crater Lower": "True",
+            "Crater Fairy": "True"
+        }
+    },
+    {
         "region_name": "Crater Fairy",
         "locations": {
             "Crater Fairy Reward": "can_play(Zeldas_Lullaby)"
+        }
+    },
+    {
+        "region_name": "Adult Mountain Summit Fairy",
+        "exits": {
+            "Death Mountain": "True",
+            "Mountain Summit Fairy": "True"
+        }
+    },
+    {
+        "region_name": "Child Mountain Summit Fairy",
+        "exits": {
+            "Death Mountain": "True",
+            "Mountain Summit Fairy": "True"
         }
     },
     {
@@ -984,8 +1051,10 @@
         },
         "exits": {
             "Zoras Domain": "True",
-            "Jabu Jabus Belly Beginning": "has_bottle",
-            "Zoras Fountain Fairy": "has_explosives"
+            "Child JJB": "has_bottle",
+            "Adult JJB": "False",
+            "Child Zoras Fountain Fairy": "has_explosives",
+            "Adult Zoras Fountain Fairy": "has_explosives and is_adult and can_play(Zeldas_Lullaby)"
         }
     },
     {
@@ -1012,7 +1081,8 @@
                 Progressive_Hookshot and nighttime"
         },
         "exits": {
-            "Ice Cavern": "True"
+            "Adult IC": "True",
+            "Child IC": "False"
         }
     },
     {
@@ -1026,6 +1096,20 @@
             "Zora Shop Item 6": "True",
             "Zora Shop Item 7": "True",
             "Zora Shop Item 8": "True"
+        }
+    },
+    {
+        "region_name": "Child Zoras Fountain Fairy",
+        "exits": {
+            "Zoras Fountain": "True",
+            "Zoras Fountain Fairy": "True"
+        }
+    },
+    {
+        "region_name": "Adult Zoras Fountain Fairy",
+        "exits": {
+            "Zoras Fountain": "True",
+            "Zoras Fountain Fairy": "True"
         }
     },
     {
@@ -1082,7 +1166,8 @@
         },
         "exits": {
             "Lost Woods": "True",
-            "Forest Temple First Room": "can_use(Hookshot)",
+            "Adult FoT": "can_use(Hookshot)",
+            "Child FoT": "False",
             "Meadow Storms Grotto": "can_play(Song_of_Storms)",
             "Sacred Forest Meadow Gossip Stones": "hints != 'mask'"
         }

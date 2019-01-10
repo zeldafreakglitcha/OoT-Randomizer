@@ -63,37 +63,41 @@
       "return_index": "h01D5"
     }
   },
-  "Death Mountain Crater Central->Fire Temple Lower": {
+  "Death Mountain Crater Central->FiT": {
     "access": "A",
     "reqs": "A",
     "dungeon": "True",
+    "name": "Fire Temple",
     "z_implementation": {
       "forward_index": "h0165",
       "return_index": [ "h024A", "h0564" ]
     }
   },
-  "Death Mountain->Dodongos Cavern Beginning": {
+  "Death Mountain->DC": {
     "access": "AC",
-    "reqs": "A",
+    "reqs": "",
     "dungeon": "True",
+    "name": "Dodongos Cavern",
     "z_implementation": {
       "forward_index": "h0004",
       "return_index": "h0242"
     }
   },
-  "Forest Temple Entry Area->Forest Temple First Room": {
+  "Forest Temple Entry Area->FoT": {
     "access": "A",
     "reqs": "A",
     "dungeon": "True",
+    "name" : "Forest Temple",
     "z_implementation": {
       "forward_index": "h0169",
       "return_index": [ "h0215", "h0608" ]
     }
   },
-  "Gerudo Fortress->Gerudo Training Grounds Lobby": {
+  "Gerudo Fortress->GTG": {
     "access": "A",
     "reqs": "A",
     "dungeon": "True",
+    "name": "Gerudo Training Grounds",
     "z_implementation": {
       "forward_index": "h0008",
       "return_index": "h03A8"
@@ -147,10 +151,11 @@
       "return_index": "h035D"
     }
   },
-  "Kakariko Village->Bottom of the Well Entry": {
+  "Kakariko Village->BotW": {
     "access": "C",
     "reqs": "C",
     "dungeon": "True",
+    "name": "Bottom of the Well",
     "z_implementation": {
       "forward_index": "h0098",
       "return_index": "h02A6"
@@ -212,10 +217,11 @@
       "return_index": "h034D"
     }
   },
-  "Kokiri Forest->Deku Tree Lobby": {
+  "Kokiri Forest->DT": {
     "access": "C",
-    "reqs": "C",
+    "reqs": "",
     "dungeon": "True",
+    "name": "Deku Tree",
     "z_implementation": {
       "forward_index": "h0000",
       "return_index": "h0209"
@@ -277,10 +283,11 @@
       "return_index": "h03CC"
     }
   },
-  "Lake Hylia->Water Temple Lobby": {
+  "Lake Hylia->WT": {
     "access": "A",
     "reqs": "A",
     "dungeon": "True",
+    "name": "Water Temple",
     "z_implementation": {
       "forward_index": "h0010",
       "return_index": [ "h021D", "h060C" ]
@@ -310,10 +317,11 @@
       "return_index": "h05D4"
     }
   },
-  "Shadow Temple Warp Region->Shadow Temple Entrance": {
+  "Shadow Temple Warp Region->ShT": {
     "access": "AC",
     "reqs": "A",
     "dungeon": "True",
+    "name": "Shadow Temple",
     "z_implementation": {
       "forward_index": "h0037",
       "return_index": [ "h0205", "h0580" ]
@@ -327,35 +335,38 @@
       "return_index": "h03C4"
     }
   },
-  "Outside Ice Cavern->Ice Cavern": {
+  "Outside Ice Cavern->IC": {
     "access": "A",
     "reqs": "A",
     "dungeon": "True",
+    "name": "Ice Cavern",
     "z_implementation": {
       "forward_index": [ "h0088", 5 ],
       "return_index": "h03D4"
     }
   },
-  "Zoras Fountain->Jabu Jabus Belly Beginning": {
+  "Zoras Fountain->JJB": {
     "access": "C",
     "reqs": "C",
     "dungeon": "True",
+    "name": "Inside Jabu Jabus Belly",
     "z_implementation": {
       "forward_index": [ "h0028", 5 ],
       "return_index": [ "h0221", "h010E" ]
     }
   },
-  "Desert Colossus->Spirit Temple Lobby": {
-    "access": "A",
+  "Desert Colossus->SpT": {
+    "access": "AC",
     "reqs": "AC",
     "dungeon": "True",
+    "name": "Spirit Temple",
     "z_implementation": {
         "forward_index": [ "h0082", 6, "h03F0", "h03F4" ],
         "return_index": [ "h01E1", "h0610", "h01ED" ]
     }
   },
   "Hyrule Castle Grounds->Hyrule Castle Fairy": {
-    "access": "C",
+    "access": "AC",
     "reqs":"",
     "fairy":"True",
     "z_implementation": {
@@ -365,7 +376,7 @@
     }
   },
   "Zoras Fountain->Zoras Fountain Fairy": {
-    "access": "",
+    "access": "AC",
     "reqs":"",
     "fairy":"True",
     "z_implementation": {
@@ -374,7 +385,7 @@
     }
   },
   "Desert Colossus->Colossus Fairy": {
-    "access": "A",
+    "access": "AC",
     "reqs":"",
     "fairy":"True",
     "z_implementation": {
@@ -383,7 +394,7 @@
     }
   },
   "Death Mountain->Mountain Summit Fairy": {
-    "access": "",
+    "access": "AC",
     "reqs":"",
     "fairy":"True",
     "z_implementation": {

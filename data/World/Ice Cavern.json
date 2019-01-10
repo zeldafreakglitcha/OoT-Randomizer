@@ -1,19 +1,38 @@
-[    
-	{
+[
+    {
+        "region_name": "Adult IC",
+        "dungeon": "Ice Cavern",
+        "exits": {
+            "Ice Cavern": "True",
+            "Outside Ice Cavern" : "True"
+        }
+    },
+    {
+        "region_name": "Child IC",
+        "dungeon": "Ice Cavern",
+        "exits": {
+            "Ice Cavern": "Kokiri_Sword",
+            "Outside Ice Cavern" : "True"
+        }
+    },
+    {
         "region_name": "Ice Cavern",
         "dungeon": "Ice Cavern",
         "locations": {
             "Ice Cavern Map Chest": "has_bottle",
             "Ice Cavern Compass Chest": "has_bottle",
-            "Ice Cavern Iron Boots Chest": "has_bottle",
+            "Ice Cavern Iron Boots Chest": "has_bottle and can_reach(Adult_IC)",
             "Ice Cavern Freestanding PoH": "has_bottle",
-            "Sheik in Ice Cavern": "has_bottle and is_adult",
-            "GS Ice Cavern Spinning Scythe Room": "can_use(Hookshot)",
-            "GS Ice Cavern Heart Piece Room": "can_use(Hookshot) and has_bottle",
-            "GS Ice Cavern Push Block Room": "can_use(Hookshot) and has_bottle"
-        },
-        "exits": {
-            "Outside Ice Cavern" : "True"
+            "Sheik in Ice Cavern": "has_bottle and can_reach(Adult_IC)",
+            "GS Ice Cavern Spinning Scythe Room": "
+                (can_reach(Adult_IC) and can_use(Hookshot)) or
+                (can_reach(Child_IC) and can_use(Boomerang))",
+            "GS Ice Cavern Heart Piece Room": "
+                (can_reach(Adult_IC) and can_use(Hookshot)) or
+                (can_reach(Child_IC) and can_use(Boomerang))",
+            "GS Ice Cavern Push Block Room": "
+                (can_reach(Adult_IC) and can_use(Hookshot)) or
+                (can_reach(Child_IC) and can_use(Boomerang))"
         }
     }
 ]
