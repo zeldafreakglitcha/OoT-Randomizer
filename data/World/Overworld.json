@@ -222,7 +222,6 @@
         },
         "exits": {
             "Hyrule Field": "True",
-            "Zoras Domain": "can_dive",
             "Lake Hylia Lab": "True",
             "Fishing Hole": "True",
             "Water Temple Lobby": "
