@@ -87,7 +87,7 @@
         "dungeon": "Spirit Temple",
         "locations": {
             "Spirit Temple Compass Chest": "
-                Progressive_Hookshot and can_play(Zeldas_Lullaby)",
+                can_use(Longshot) and can_play(Zeldas_Lullaby)",
             "Spirit Temple Early Adult Right Chest": "
                 has_bow or Progressive_Hookshot or has_bombchus", 
                 #requires a very specific Bombchu use, Hover Boots can be skipped by jumping on top of the rolling rock.

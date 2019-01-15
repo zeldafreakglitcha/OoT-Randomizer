@@ -69,6 +69,7 @@
     "dungeon": "True",
     "name": "Fire Temple",
     "z_implementation": {
+      "scenes": [ 4 ],
       "forward_index": "h0165",
       "return_index": [ "h024A", "h0564" ]
     }
@@ -79,6 +80,7 @@
     "dungeon": "True",
     "name": "Dodongos Cavern",
     "z_implementation": {
+      "scenes": [ 1 ],
       "forward_index": "h0004",
       "return_index": "h0242"
     }
@@ -89,6 +91,7 @@
     "dungeon": "True",
     "name" : "Forest Temple",
     "z_implementation": {
+      "scenes": [ 3 ],
       "forward_index": "h0169",
       "return_index": [ "h0215", "h0608" ]
     }
@@ -99,6 +102,7 @@
     "dungeon": "True",
     "name": "Gerudo Training Grounds",
     "z_implementation": {
+      "scenes": [ 11 ],
       "forward_index": "h0008",
       "return_index": "h03A8"
     }
@@ -157,6 +161,7 @@
     "dungeon": "True",
     "name": "Bottom of the Well",
     "z_implementation": {
+      "scenes": [ 8 ],
       "forward_index": "h0098",
       "return_index": "h02A6"
     }
@@ -223,6 +228,7 @@
     "dungeon": "True",
     "name": "Deku Tree",
     "z_implementation": {
+      "scenes": [ 0 ],
       "forward_index": "h0000",
       "return_index": "h0209"
     }
@@ -289,6 +295,7 @@
     "dungeon": "True",
     "name": "Water Temple",
     "z_implementation": {
+      "scenes": [ 5 ],
       "forward_index": "h0010",
       "return_index": [ "h021D", "h060C" ]
     }
@@ -323,6 +330,7 @@
     "dungeon": "True",
     "name": "Shadow Temple",
     "z_implementation": {
+      "scenes": [ 7 ],
       "forward_index": "h0037",
       "return_index": [ "h0205", "h0580" ]
     }
@@ -341,6 +349,7 @@
     "dungeon": "True",
     "name": "Ice Cavern",
     "z_implementation": {
+      "scenes": [ 9 ],
       "forward_index": [ "h0088", 5 ],
       "return_index": "h03D4"
     }
@@ -351,6 +360,7 @@
     "dungeon": "True",
     "name": "Inside Jabu Jabus Belly",
     "z_implementation": {
+      "scenes": [ 2 ],
       "forward_index": [ "h0028", 5 ],
       "return_index": [ "h0221", "h010E" ]
     }
@@ -361,6 +371,7 @@
     "dungeon": "True",
     "name": "Spirit Temple",
     "z_implementation": {
+        "scenes": [ 6 ],
         "forward_index": [ "h0082", 6, "h03F0", "h03F4" ],
         "return_index": [ "h01E1", "h0610", "h01ED" ]
     }

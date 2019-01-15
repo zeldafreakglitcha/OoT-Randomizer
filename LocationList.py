@@ -35,11 +35,11 @@ location_table = {
 
     "Zelda":                                           ("Cutscene",    0xFF,  0x01, "Temple of Time",         None),
     "Gift from Saria":                                 ("Cutscene",    0xFF,  0x02, "the Lost Woods",         None),
-    "Zoras Fountain Fairy Reward":                     ("Cutscene",    0xFF,  0x10, "Zora's Fountain",        None),
-    "Hyrule Castle Fairy Reward":                      ("Cutscene",    0xFF,  0x11, "Hyrule Castle",          None),
-    "Desert Colossus Fairy Reward":                    ("Cutscene",    0xFF,  0x12, "Desert Colossus",        None),
-    "Mountain Summit Fairy Reward":                    ("Cutscene",    0xFF,  0x13, "Death Mountain Trail",   None),
-    "Crater Fairy Reward":                             ("Cutscene",    0xFF,  0x14, "Death Mountain Crater",  None),
+    "Zoras Fountain Fairy Reward":                     ("Cutscene",    0xFF,  0x10, "Great Faries",           None),
+    "Hyrule Castle Fairy Reward":                      ("Cutscene",    0xFF,  0x11, "Great Faries",           None),
+    "Desert Colossus Fairy Reward":                    ("Cutscene",    0xFF,  0x12, "Great Faries",           None),
+    "Mountain Summit Fairy Reward":                    ("Cutscene",    0xFF,  0x13, "Great Faries",           None),
+    "Crater Fairy Reward":                             ("Cutscene",    0xFF,  0x14, "Great Faries",           None),
     "Spirit Temple Adult Fairy Reward":                ("Cutscene",    0xFF,  0x15, "Spirit Temple",          None),
     "Spirit Temple Child Fairy Reward":                ("Cutscene",    0xFF,  0x16, "Spirit Temple",          None),
 

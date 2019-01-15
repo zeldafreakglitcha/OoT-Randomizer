@@ -676,7 +676,7 @@ def patch_rom(spoiler:Spoiler, world:World, rom:LocalRom):
             di = di * 4
             write_entrance1(target_index + i, et_original[di:di+4])
 
-    def write_entrances(index, data):
+    def write_entrances(index, data, scenes=[]):
         offset = 0
         target_index = -1
         if isinstance(index, str):
@@ -693,14 +693,20 @@ def patch_rom(spoiler:Spoiler, world:World, rom:LocalRom):
                 target_index = -1
             if isinstance(index[i], str):
                 target_index=int(index[i][1:], 16)
+                for scene in scenes:
+                    rom.write_int16(0xB71FF0 + 2 * scene, target_index)
+                scenes=[]
 
     for key, original in world.entrances.items():
         actual = world.entrances[original["actual"]]
         zone_in_index = original["z_implementation"]["forward_index"]
+        scenes = []
+        if "scenes" in actual["z_implementation"]:
+            scenes = actual["z_implementation"]["scenes"]
         zone_in_data = actual["z_implementation"]["forward_index"]
         zone_out_index = actual["z_implementation"]["return_index"]
         zone_out_data = original["z_implementation"]["return_index"]
-        write_entrances(zone_in_index, zone_in_data)
+        write_entrances(zone_in_index, zone_in_data, scenes)
         write_entrances(zone_out_index, zone_out_data)
 
     # Fix text for Pocket Cucco.

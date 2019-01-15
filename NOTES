@@ -25,6 +25,11 @@ list. They will have their vanilla items if you glitch your way there.
 The Requiem song is reached by zoning out of spirit and not into the desert
 colossus (free song when you find spirit).
 
+The great faries in the overworld are detached from their original locations for
+the purposes of hints. E.g. this means that barren or way-of-the-hero for the
+death mountain crater does not include the death mountain crater faries. There
+is a single hint location for the 5 overworld great faries combined.
+
 Check the spoiler log for the list of entrances.
 
 See further below for detailed logic.
@@ -33,13 +38,11 @@ Known issues:
 
 There is no UI. Entrance rando is hard-coded on.
 
-Barren and WotH hints are distorted due to great fariy randomization. Generally
-don't trust these hints when a great fairy is involved.
+Bad grammar on woth and barren hints for the overworld faries.
 
-Death warping and save warping in dungeons is broken. Always warp out of
-dungeons with a song or walk out the front door. If you die in-dungeon, you may
-respawn at the wrong location. You can safely zone out and continue play but
-you may be at an out-of-logic location.
+Death warping and save warping at dungeon bosses is broken. If you die to a
+dungeon boss, you may respawn at the wrong location. You can safely zone out
+and continue play but you may be at an out-of-logic location.
 
 I suggest using this settings string to minimize logic bug risk as dev
 continues:
@@ -138,10 +141,11 @@ Kokiri Sword is required for logic on the Stalfos and Lizalfos.
 
     Ice Cavern:
 
-Ice will always be adult-accessible. Everything is in logic for child with the
-exception of the final chest and song, however a Kokiri Sword is needed to pass
-the first room of ice breathers.
-
+Ice will always be adult-accessible. Child generally cannot progress other than
+the first skull and a Kokiri sword is needed to pass the ice breathers
+independently of adult. If adult has access but no hookshot, child may be
+required to come back or skull farming.
+ 
     Bottom of the Well:
 
 BotW will always be child-accessible. Adult is powerless with no impact to
