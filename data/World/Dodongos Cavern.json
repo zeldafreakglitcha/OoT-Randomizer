@@ -71,7 +71,7 @@
         "exits": {
             "Dodongos Cavern Lobby": "True",
             "Dodongos Cavern Far Bridge": "
-                (can_reach(Child_DC) and can_use('Slingshot')) or
+                (can_reach(Child_DC) and can_use('Slingshot') and (has_explosives or Progressive_Strength_Upgrade)) or
                 (can_reach(Adult_DC) and
                  ((can_use(Bow) or can_use(Hover_Boots) or can_use(Longshot) or logic_dc_jump)))"
         }
