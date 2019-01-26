@@ -663,6 +663,16 @@ def patch_rom(spoiler:Spoiler, world:World, rom:LocalRom):
     write_entrance1(0x01E9, [0x3B, 0x02, 0x41, 0x02], 4)
     write_entrance1(0x03F8, [0x06, 0x03, 0x01, 0x02], 4)
 
+    #Gohma's save/death warp is optimized to use immediate 0 for the
+    #deku tree respawn. Use the delay slot before the switch table
+    #to hold Gohmas jump entrance as actual data so we can substitute
+    # the entrance index later.
+    rom.write_int32(0xB06290, 0x240E0000) #li t6, 0
+    rom.write_int32(0xB062B0, 0xAE0E0000) #sw t6, 0(s0)
+    rom.write_int32(0xBC60AC, 0x24180000) #li t8, 0
+    rom.write_int32(0xBC6160, 0x24180000) #li t8, 0
+    rom.write_int32(0xBC6168, 0xAD380000) #sw t8, 0(t1)
+
     et_original = rom.read_bytes(0xB6FBF0, 4 * 0x0614)
 
     def write_entrance(target_index, target_length, data):
@@ -694,7 +704,10 @@ def patch_rom(spoiler:Spoiler, world:World, rom:LocalRom):
             if isinstance(index[i], str):
                 target_index=int(index[i][1:], 16)
                 for scene in scenes:
-                    rom.write_int16(0xB71FF0 + 2 * scene, target_index)
+                    if isinstance(scene, str):
+                        rom.write_int16(int(scene[1:], 16), target_index)
+                    else:
+                        rom.write_int16(0xB71FF0 + 2 * scene, target_index)
                 scenes=[]
 
     for key, original in world.entrances.items():

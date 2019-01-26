@@ -69,7 +69,7 @@
     "dungeon": "True",
     "name": "Fire Temple",
     "z_implementation": {
-      "scenes": [ 4 ],
+      "scenes": [ "hB71FF8", "hB062DA", "hBC60CE" ],
       "forward_index": "h0165",
       "return_index": [ "h024A", "h0564" ]
     }
@@ -80,7 +80,7 @@
     "dungeon": "True",
     "name": "Dodongos Cavern",
     "z_implementation": {
-      "scenes": [ 1 ],
+      "scenes": [ "hB71FF2", "hB062B6", "hBC616E" ],
       "forward_index": "h0004",
       "return_index": "h0242"
     }
@@ -91,6 +91,7 @@
     "dungeon": "True",
     "name" : "Forest Temple",
     "z_implementation": {
+      "scenes": [ "hB71FF6", "hB062CE", "hBC6182" ],
       "scenes": [ 3 ],
       "forward_index": "h0169",
       "return_index": [ "h0215", "h0608" ]
@@ -228,7 +229,7 @@
     "dungeon": "True",
     "name": "Deku Tree",
     "z_implementation": {
-      "scenes": [ 0 ],
+      "scenes": [ "hB71FF0", "hB06292", "hBC6162", "hBC60AE" ],
       "forward_index": "h0000",
       "return_index": "h0209"
     }
@@ -295,7 +296,7 @@
     "dungeon": "True",
     "name": "Water Temple",
     "z_implementation": {
-      "scenes": [ 5 ],
+      "scenes": [ "hB71FFA", "hB062E6", "hBC6196" ],
       "forward_index": "h0010",
       "return_index": [ "h021D", "h060C" ]
     }
@@ -330,7 +331,7 @@
     "dungeon": "True",
     "name": "Shadow Temple",
     "z_implementation": {
-      "scenes": [ 7 ],
+      "scenes": [ "hB71FFE", "hB062FE", "hBC61AA" ],
       "forward_index": "h0037",
       "return_index": [ "h0205", "h0580" ]
     }
@@ -360,6 +361,7 @@
     "dungeon": "True",
     "name": "Inside Jabu Jabus Belly",
     "z_implementation": {
+      "scenes": [ "hB71FF4", "hB062C2", "hBC60C2" ],
       "scenes": [ 2 ],
       "forward_index": [ "h0028", 5 ],
       "return_index": [ "h0221", "h010E" ]
@@ -371,7 +373,7 @@
     "dungeon": "True",
     "name": "Spirit Temple",
     "z_implementation": {
-        "scenes": [ 6 ],
+        "scenes": [ "hB71FFC", "hB062F2", "hBC6122" ],
         "forward_index": [ "h0082", 6, "h03F0", "h03F4" ],
         "return_index": [ "h01E1", "h0610", "h01ED" ]
     }
