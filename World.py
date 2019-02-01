@@ -103,7 +103,13 @@ class World(object):
         with io.open(file_path, 'r') as file:
             for line in file.readlines():
                 json_string += line.split('#')[0].replace('\n', ' ')
-        region_json = json.loads(json_string)
+        json_string = re.sub(' +', ' ', json_string)
+        try:
+            region_json = json.loads(json_string)
+        except json.JSONDecodeError as error:
+            print("JSON parse error around text:\n" + json_string[error.pos-35:error.pos+35])
+            print("                                   ^^\n")
+            raise error
 
         for region in region_json:
             new_region = Region(region['region_name'])
