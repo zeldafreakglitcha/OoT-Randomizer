@@ -47,12 +47,12 @@ class Location(object):
 
 
     def can_fill(self, state, item, check_access=True):
-        if self.minor_only and item.majoritem:
-            return False
         return (
-            not self.is_disabled() and 
+            not (self.minor_only and item.majoritem) and
             self.can_fill_fast(item) and
-            (not check_access or state.can_reach(self)))
+            (not item.advancement or
+             (not self.is_disabled() and
+              (not check_access or state.can_reach(self)))))
 
 
     def can_fill_fast(self, item, manual=False):
