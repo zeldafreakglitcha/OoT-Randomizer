@@ -177,6 +177,9 @@ class State(object):
         else:
             return self.has(item)
 
+    def can_attack(self, adult_reach=None, child_reach=None):
+        return self.can_reach(adult_reach) or \
+               self.can_reach(child_reach) and self.can_child_attack()
 
     def can_buy_bombchus(self):
         return self.has('Buy Bombchu (5)') or \
@@ -263,6 +266,9 @@ class State(object):
         # Warning: This only considers items that are marked as advancement items
         return self.heart_count() >= count
 
+    def has_shield(self, adult_reach=None, child_reach=None):
+        return self.can_reach(adult_reach) and (self.has('Mirror Shield') or self.has('Buy Hylian Shield')) or \
+        self.can_reach(child_reach) and self.has('Buy Deku Shield')
 
     def heart_count(self):
         # Warning: This only considers items that are marked as advancement items
@@ -277,6 +283,9 @@ class State(object):
         return self.can_use('Dins Fire') or \
                self.can_reach(adult_reach) and self.can_use('Fire Arrows')
 
+    def has_fire_source_with_torch(self, adult_reach=None, child_reach=None):
+        return self.has_fire_source(adult_reach) or \
+               self.can_reach(child_reach) and self.has_sticks()
 
     def guarantee_hint(self):
         if(self.world.hints == 'mask'):
