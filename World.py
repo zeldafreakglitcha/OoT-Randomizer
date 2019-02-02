@@ -13,6 +13,7 @@ import copy
 import io
 import json
 import random
+import re
 
 class World(object):
 
