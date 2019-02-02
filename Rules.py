@@ -28,6 +28,9 @@ def set_rules(world):
             else:
                 add_item_rule(location, lambda location, item: item.type != 'Song')
 
+        if location.type == 'Entrance':
+            add_item_rule(location, lambda location, item: item.type == 'Entrance' and item.world.id == location.world.id)
+
         if location.type == 'Shop':
             if location.name in world.shop_prices:
                 add_item_rule(location, lambda location, item: item.type != 'Shop')
