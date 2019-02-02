@@ -62,7 +62,7 @@ class Spoiler(object):
         self.locations = {}
         for world in self.worlds:
             spoiler_locations = [location for location in world.get_locations() if not location.locked and location.type != 'GossipStone']
-            sort_order = {"Song": 0, "Boss": -1}
+            sort_order = {"Song": 0, "Boss": -1, "Entrance": -2}
             spoiler_locations.sort(key=lambda item: sort_order.get(item.type, 1))
             self.locations[world.id] = OrderedDict([(str(location), location.item) for location in spoiler_locations])
 
