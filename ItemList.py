@@ -253,6 +253,104 @@ item_table = {
     'Buy Red Potion [40]':              ('Shop',     False, 0x30, {'object': 0x00EB, 'price': 40}),
     'Buy Red Potion [50]':              ('Shop',     False, 0x31, {'object': 0x00EB, 'price': 50}),
 
+    #We say that Deku Tree and DC are non-progression, because we wan't them to be placeable cross-age
+    #and either is fine for these two. However if we mark both ages progression, then all-locations-reachable
+    #means that they would have to be reachable by both ages, which heavily restricts placement, and for
+    #Deku Tree this would even exclude the vanilla placement. The good news is all location placements are
+    #independent of each other in assumed fill if entrances are the first pass so you are still safe with
+    #these two being placed with no logic.
+
+    'Child Deku Tree':                  ('Entrance', False, None, None),
+    'Adult Deku Tree':                  ('Entrance', False, None,
+                                            {
+                                              'specials': [ 0xB71FF0, 0xB06292, 0xBC6162, 0xBC60AE ],
+                                              'forwards': [ 0x0000 ],
+                                              'returns' : [ 0x0209 ],
+                                            }),
+
+    'Child Dodongos Cavern':            ('Entrance', False, None, None),
+    'Adult Dodongos Cavern':            ('Entrance', False, None,
+                                            {
+                                              'specials': [ 0xB71FF2, 0xB062B6, 0xBC616E ],
+                                              'forwards': [ 0x0004 ],
+                                              'returns' : [ 0x0242 ],
+                                            }),
+
+    'Child Jabu Jabus Belly':           ('Entrance', True,  None, None),
+    'Adult Jabu Jabus Belly':           ('Entrance', False, None,
+                                            {
+                                              'specials': [ 0xB71FF4, 0xB062C2, 0xBC60C2 ],
+                                              'forwards': [ 0x0028 ],
+                                              'returns' : [ 0x0221, 0x010E ],
+                                            }),
+
+
+    'Child Forest Temple':              ('Entrance', False, None, None),
+    'Adult Forest Temple':              ('Entrance', True,  None,
+                                            {
+                                              'specials': [ 0xB71FF6, 0xB062CE, 0xBC6182 ],
+                                              'forwards': [ 0x0169 ],
+                                              'returns' : [ 0x0215, 0x0608 ],
+                                            }),
+
+    'Child Fire Temple':                ('Entrance', False, None, None),
+    'Adult Fire Temple':                ('Entrance', True,  None, 
+                                            {
+                                              'specials': [ 0xB71FF8, 0xB062DA, 0xBC60CE ],
+                                              'forwards': [ 0x0165 ],
+                                              'returns' : [ 0x024A, 0x0564 ],
+                                            }),
+
+    'Child Water Temple':               ('Entrance', False, None, None),
+    'Adult Water Temple':               ('Entrance', True,  None,
+                                            {
+                                              'specials': [ 0xB71FFA, 0xB062E6, 0xBC6196 ],
+                                              'forwards': [ 0x0010 ],
+                                              'returns' : [ 0x021D, 0x060C ],
+                                            }),
+
+    'Child Spirit Temple':              ('Entrance', True,  None, None),
+    'Adult Spirit Temple':              ('Entrance', True,  None,
+                                            {
+                                              'specials': [ 0xB71FFC, 0xB062F2, 0xBC6122 ],
+                                              'forwards': [ 0x0082 ],
+                                              'returns':  [ 0x01E1, 0x0610, 0x01ED ],
+                                            }),
+
+    'Child Shadow Temple':              ('Entrance', False, None, None),
+    'Adult Shadow Temple':              ('Entrance', True,  None,
+                                            {
+                                              'specials': [ 0xB71FFE, 0xB062FE, 0xBC61AA ],
+                                              'forwards': [ 0x0037 ],
+                                              'returns' : [ 0x0205, 0x0580 ],
+                                            }),
+
+
+    'Child Bottom of the Well':         ('Entrance', True,  None, None),
+    'Adult Bottom of the Well':         ('Entrance', False, None,
+                                            {
+                                              'specials': [ 0xB72000 ],
+                                              'forwards': [ 0x0098 ],
+                                              'returns' : [ 0x02A6 ],
+                                            }),
+
+    'Child Ice Cavern':                 ('Entrance', False, None, None),
+    'Adult Ice Cavern':                 ('Entrance', True,  None,
+                                            {
+                                              'specials': [ 0xB72002 ],
+                                              'forwards': [ 0x0088 ],
+                                              'returns' : [ 0x03D4 ],
+                                            }),
+
+    'Child Gerudo Training Grounds':    ('Entrance', False, None, None),
+    'Adult Gerudo Training Grounds':    ('Entrance', True,  None,
+                                            {
+                                              'specials': [ 0xB72006 ],
+                                              'forwards': [ 0x0008 ],
+                                              'returns' : [ 0x03A8 ],
+                                            }),
+
+
     'Kokiri Emerald':                   ('Event',    True,  None,
                                             {
                                                 'save_byte':  0xA5,

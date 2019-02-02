@@ -1,15 +1,29 @@
-[    
-	{
-        "region_name": "Spirit Temple Lobby",
+[
+    {
+        "region_name": "Child Spirit Temple",
         "dungeon": "Spirit Temple",
-        "exits": {
-            "Desert Colossus": "True",
-            "Child Spirit Temple": "can_play(Requiem_of_Spirit)",
-            "Early Adult Spirit Temple": "can_use(Silver_Gauntlets)"
+        "exits" : {
+            "Spirit Temple Lobby": "True",
+            "Child Spirit Temple Lower" : "True"
         }
     },
     {
-        "region_name": "Child Spirit Temple",
+        "region_name": "Adult Spirit Temple",
+        "dungeon": "Spirit Temple",
+        "exits" : {
+            "Spirit Temple Lobby": "True",
+            "Early Adult Spirit Temple" : "can_use(Silver_Gauntlets)"
+        }
+    },
+    {
+        "region_name": "Spirit Temple Lobby",
+        "dungeon": "Spirit Temple",
+        "locations": {
+            "Sheik at Colossus": "True"
+        }
+    },
+    {
+        "region_name": "Child Spirit Temple Lower",
         "dungeon": "Spirit Temple",
         "locations": {
             "Spirit Temple Child Left Chest": "
@@ -40,25 +54,25 @@
                 has_projectile(both) or 
                 (((Small_Key_Spirit_Temple, 3) or 
                     ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic)) and 
-                can_use(Silver_Gauntlets) and has_projectile(adult)) or 
-                ((Small_Key_Spirit_Temple, 5) and can_play(Requiem_of_Spirit) and 
+                can_use(Silver_Gauntlets) and has_projectile(adult) and can_reach(Adult_Spirit_Temple)) or 
+                ((Small_Key_Spirit_Temple, 5) and can_reach(Child_Spirit_Temple) and 
                     has_projectile(child))",
             "Spirit Temple Child Climb North Chest": "
                 has_projectile(both) or 
                 (((Small_Key_Spirit_Temple, 3) or 
                     ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic)) and 
-                can_use(Silver_Gauntlets) and has_projectile(adult)) or 
-                ((Small_Key_Spirit_Temple, 5) and can_play(Requiem_of_Spirit) and 
+                can_use(Silver_Gauntlets) and has_projectile(adult) and can_reach(Adult_Spirit_Temple)) or 
+                ((Small_Key_Spirit_Temple, 5) and can_reach(Child_Spirit_Temple) and 
                     has_projectile(child))",
             "GS Spirit Temple Bomb for Light Room": "
                 has_projectile(both) or can_use(Dins_Fire) or 
                 ((damage_multiplier != 'ohko' or has_bottle or can_use(Nayrus_Love)) and 
                     (has_sticks or Kokiri_Sword or has_projectile(child))) or 
-                (can_play(Requiem_of_Spirit) and 
+                (can_reach(Child_Spirit_Temple) and 
                     (Small_Key_Spirit_Temple, 5) and has_projectile(child)) or 
                 (((Small_Key_Spirit_Temple, 3) or 
                     ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic)) and 
-                can_use(Silver_Gauntlets) and 
+                can_use(Silver_Gauntlets) and can_reach(Adult_Spirit_Temple) and
                 (has_projectile(adult) or damage_multiplier != 'ohko' or 
                     has_bottle or can_use(Nayrus_Love)))"
         },
@@ -71,7 +85,7 @@
         "dungeon": "Spirit Temple",
         "locations": {
             "Spirit Temple Compass Chest": "
-                Progressive_Hookshot and can_play(Zeldas_Lullaby)",
+                can_use(Longshot) and can_play(Zeldas_Lullaby)",
             "Spirit Temple Early Adult Right Chest": "
                 has_bow or Progressive_Hookshot or has_bombchus", 
                 #requires a very specific Bombchu use, Hover Boots can be skipped by jumping on top of the rolling rock.
@@ -95,39 +109,39 @@
                 Magic_Meter and (Dins_Fire or 
                     (Fire_Arrows and has_bow and has_sticks))) or 
                 ((Small_Key_Spirit_Temple, 5) and has_explosives and 
-                    can_play(Requiem_of_Spirit) and has_sticks) or 
+                    can_reach(Child_Spirit_Temple) and has_sticks) or 
                 ((Small_Key_Spirit_Temple, 3) and can_use(Fire_Arrows) and 
-                    can_use(Silver_Gauntlets))",
+                    can_reach(Adult_Spirit_Temple) and can_use(Silver_Gauntlets))",
             "Spirit Temple Sun Block Room Chest": "
                 ((has_explosives or (Small_Key_Spirit_Temple, 3) or 
                     ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic)) and 
                 Magic_Meter and (Dins_Fire or 
                     (Fire_Arrows and has_bow and has_sticks))) or 
                 ((Small_Key_Spirit_Temple, 5) and has_explosives and 
-                    can_play(Requiem_of_Spirit) and has_sticks) or 
+                    can_reach(Child_Spirit_Temple) and has_sticks) or 
                 ((Small_Key_Spirit_Temple, 3) and can_use(Fire_Arrows) and 
-                    can_use(Silver_Gauntlets))",
+                    can_reach(Adult_Spirit_Temple) and can_use(Silver_Gauntlets))",
             "Spirit Temple Statue Hand Chest": "
                 (Small_Key_Spirit_Temple, 3) and can_use(Silver_Gauntlets) and 
-                can_play(Zeldas_Lullaby)",
+                can_reach(Adult_Spirit_Temple) and can_play(Zeldas_Lullaby)",
             "Spirit Temple NE Main Room Chest": "
                 (Small_Key_Spirit_Temple, 3) and can_use(Silver_Gauntlets) and can_play(Zeldas_Lullaby) and 
-                (Progressive_Hookshot or Hover_Boots)",
+                can_reach(Adult_Spirit_Temple) and (Progressive_Hookshot or Hover_Boots)",
             "GS Spirit Temple Hall to West Iron Knuckle": "
                 (has_explosives and Boomerang and Progressive_Hookshot) or 
                 (Boomerang and (Small_Key_Spirit_Temple, 5) and 
-                    has_explosives and can_play(Requiem_of_Spirit)) or 
-                (Progressive_Hookshot and can_use(Silver_Gauntlets) and 
+                    has_explosives and can_reach(Child_Spirit_Temple)) or 
+                (Progressive_Hookshot and can_use(Silver_Gauntlets) and can_reach(Adult_Spirit_Temple) and
                     ((Small_Key_Spirit_Temple, 3) or 
                         ((Small_Key_Spirit_Temple, 2) and Boomerang and bombchus_in_logic)))",
             "GS Spirit Temple Lobby": "
-                can_use(Silver_Gauntlets) and (Small_Key_Spirit_Temple, 3) and 
+                can_use(Silver_Gauntlets) and can_reach(Adult_Spirit_Temple) and (Small_Key_Spirit_Temple, 3) and 
                 (Progressive_Hookshot or Hover_Boots)"
         },
         "exits": {
             "Spirit Temple Outdoor Hands": "True",
             "Spirit Temple Beyond Central Locked Door": "
-                (Small_Key_Spirit_Temple, 4) and can_use(Silver_Gauntlets)",
+                (Small_Key_Spirit_Temple, 4) and can_use(Silver_Gauntlets) and can_reach(Adult_Spirit_Temple)",
             "Child Spirit Temple Climb": "True"
         }
     },
@@ -138,7 +152,13 @@
                 ((Small_Key_Spirit_Temple, 3) and (Progressive_Hookshot, 2) and has_explosives) or 
                 (Small_Key_Spirit_Temple, 5)",
             "Mirror Shield Chest": "
-                (Small_Key_Spirit_Temple, 4) and can_use(Silver_Gauntlets) and has_explosives"
+                (Small_Key_Spirit_Temple, 4) and can_use(Silver_Gauntlets) and has_explosives and can_reach(Adult_Spirit_Temple)"
+        },
+        "exits": {
+            "Child Desert Colossus": "(Small_Key_Spirit_Temple, 5) and can_reach(Child_Spirit_Temple)",
+            "Adult Desert Colossus": "
+                    can_use(Silver_Gauntlets) and can_reach(Adult_Spirit_Temple) and 
+                    (((Small_Key_Spirit_Temple, 3) and has_explosives) or (Small_Key_Spirit_Temple, 5))"
         }
     },
     {
@@ -174,3 +194,4 @@
         }
     }
 ]
+

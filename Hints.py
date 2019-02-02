@@ -68,7 +68,9 @@ def buildHintString(hintString):
 
 
 def getItemGenericName(item):
-    if item.dungeonitem:
+    if item.type == "Entrance":
+        return item.name[6:]
+    elif item.dungeonitem:
         return item.type
     else:
         return item.name

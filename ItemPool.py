@@ -378,6 +378,18 @@ songlist = [
     'Nocturne of Shadow',
     'Requiem of Spirit']
 
+entrancelist = [
+    'Deku Tree',
+    'Dodongos Cavern',
+    'Jabu Jabus Belly',
+    'Forest Temple',
+    'Fire Temple',
+    'Water Temple',
+    'Shadow Temple',
+    'Spirit Temple',
+    'Ice Cavern',
+    'Gerudo Training Grounds',
+    'Bottom of the Well']
 
 skulltula_locations = ([
     'GS Kokiri Know It All House',
@@ -529,7 +541,11 @@ def generate_itempool(world):
     world.itempool = ItemFactory(pool, world)
     for (location, item) in placed_items.items():
         world.push_item(location, ItemFactory(item, world))
-        world.get_location(location).locked = True
+        placed_location = world.get_location(location)
+        placed_location.locked = True
+        placed_item = placed_location.item
+        if placed_item.type == "Entrance":
+            placed_item.advancement = True
 
     choose_trials(world)
     fill_bosses(world)
@@ -562,6 +578,14 @@ def get_pool_core(world):
     else:
         placed_items['Gift from Saria'] = 'Ocarina'
         placed_items['Ocarina of Time'] = 'Ocarina'
+
+    for age in ['Adult', 'Child' ]:
+        for entrance in entrancelist:
+            name = age + " " + entrance
+            if world.shuffle_dungeon_entrances:
+                pool.extend([name])
+            else:
+                placed_items[name] = name;
 
     if world.dungeon_mq['Deku Tree']:
         skulltula_locations_final = skulltula_locations + [
