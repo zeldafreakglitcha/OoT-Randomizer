@@ -87,6 +87,8 @@ class State(object):
 
 
     def has(self, item, count=1):
+        if (item == None):
+            return True;
         return self.prog_items[item] >= count
 
 
@@ -203,8 +205,9 @@ class State(object):
         return self.has_bombs() or self.has_bombchus()
 
 
-    def can_blast_or_smash(self):
-        return self.has_explosives() or (self.is_adult() and self.has('Hammer'))
+    def can_blast_or_smash(self, adult_qualifier=None):
+        return self.has_explosives() or \
+               (self.has(adult_qualifier) and self.is_adult() and self.has('Hammer'))
 
 
     def can_dive(self):
@@ -215,16 +218,19 @@ class State(object):
         return ((self.has('Magic Meter') and self.has('Lens of Truth')) or self.world.logic_lens != 'all')
 
 
-    def has_projectile(self, age='either'):
+    def has_projectile(self, age='either', adult_qualifier=None, child_qualifier=None):
+        as_adult = self.has(adult_qualifier) and \
+            (self.has_explosives() or self.has_bow() or self.has('Progressive Hookshot'))
+        as_child = self.has(child_qualifier) and \
+            (self.has_explosives() or self.has_slingshot() or self.has('Boomerang'))
         if age == 'child':
-            return self.has_explosives() or self.has_slingshot() or self.has('Boomerang')
+            return as_child
         elif age == 'adult':
-            return self.has_explosives() or self.has_bow() or self.has('Progressive Hookshot')
+            return as_adult
         elif age == 'both':
-            return self.has_explosives() or ((self.has_bow() or self.has('Progressive Hookshot')) and (self.has_slingshot() or self.has('Boomerang')))
+            return as_child and as_adult
         else:
-            return self.has_explosives() or ((self.has_bow() or self.has('Progressive Hookshot')) or (self.has_slingshot() or self.has('Boomerang')))
-
+            return as_child or as_adult
 
     def has_GoronTunic(self):
         return (self.has('Goron Tunic') or self.has('Buy Goron Tunic'))
@@ -267,8 +273,9 @@ class State(object):
         )
 
 
-    def has_fire_source(self):
-        return self.can_use('Dins Fire') or self.can_use('Fire Arrows')
+    def has_fire_source(self, adult_qualifier=None):
+        return self.can_use('Dins Fire') or \
+               self.has(adult_qualifier) and self.can_use('Fire Arrows')
 
 
     def guarantee_hint(self):
