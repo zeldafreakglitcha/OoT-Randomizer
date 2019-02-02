@@ -177,7 +177,6 @@ class State(object):
         else:
             return self.has(item)
 
-
     def can_buy_bombchus(self):
         return self.has('Buy Bombchu (5)') or \
                self.has('Buy Bombchu (10)') or \
@@ -263,6 +262,10 @@ class State(object):
         # Warning: This only considers items that are marked as advancement items
         return self.heart_count() >= count
 
+    def has_shield(self, adult_qualifier=None, child_qualifier=None):
+        #The mirror shield does not count as it cannot reflect deku scrub attack
+        return self.has(adult_qualifier) and self.has('Buy Hylian Shield') or \
+        self.has(child_qualifier) and self.has('Buy Deku Shield')
 
     def heart_count(self):
         # Warning: This only considers items that are marked as advancement items
@@ -277,6 +280,9 @@ class State(object):
         return self.can_use('Dins Fire') or \
                self.has(adult_qualifier) and self.can_use('Fire Arrows')
 
+    def has_fire_source_with_torch(self, adult_qualifier=None, child_qualifier=None):
+        return self.has_fire_source(adult_qualifier) or \
+               self.has(child_qualifier) and self.has_sticks()
 
     def guarantee_hint(self):
         if(self.world.hints == 'mask'):
