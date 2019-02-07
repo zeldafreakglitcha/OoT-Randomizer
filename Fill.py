@@ -68,16 +68,16 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
 
     #We place entrances first. Like songs and shops, the placement is heavily
     #limited with the extra complication that Deku Tree and DC are placed without
-    #logic to handle ALR with either age. This can be fixed allowing exclusions
-    # or non-trivial logic to ALR test.
+    #logic to handle ALR with either age but not always both. This can be fixed
+    #allowing exclusions or non-trivial logic to ALR condition definition.
     if worlds[0].shuffle_dungeon_entrances:
         fill_ownworld_restrictive(window, worlds, entrance_locations, entrancepool, \
                                   itempool + songitempool + shopitempool + dungeon_items, "entrance")
+        #Now put every entrance access fully into logic
         for entrance in traverse(entrancepool):
-            print("advanced:" + entrance.name)
             entrance.advancement = True
 
-    # We place all the shop items first. Like songs, they have a more limited
+    # We place all the shop items next. Like songs, they have a more limited
     # set of locations that they can be placed in, so placing them first will
     # reduce the odds of creating unbeatable seeds. This also avoids needing
     # to create item rules for every location for whether they are a shop item

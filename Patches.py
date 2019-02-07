@@ -688,8 +688,6 @@ def patch_rom(spoiler:Spoiler, world:World, rom:LocalRom):
             if entrance_location is None:
                 continue;
             dungeon_location = location.item.special
-            print(str(entrance_location))
-            print(str(dungeon_location))
             zone_in_indexes = entrance_location["forwards"]
             zone_in_data = dungeon_location["forwards"][0]
             write_entrances(zone_in_indexes, zone_in_data, dungeon_location["specials"])
