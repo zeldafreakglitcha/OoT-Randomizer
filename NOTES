@@ -84,6 +84,10 @@ hookshot. The dragon chest is out of logic with no hookshot.
 There is a general expectation that both adult and child can jump down to the
 middle level of the central tower when water it at the bottom level.
 
+The Water temple entrance is never in logic with gold scale, even if the trick
+is enabled. This is because morpha may not be behind the entrance and the lake
+could be filled by early water completion somewhere else in the world.
+
     Shadow Temple:
 
 Shadow will always be adult-accessible. Child is powerless with no impact to
@@ -107,7 +111,10 @@ spirit than adult.
 
 GTG will always be adult-accessible. Child may be expected to progress the mazes
 from either entry and complete the eye-shoot, stalfos and lizalfos checks.
-Kokiri Sword is required for logic on the Stalfos and Lizalfos.
+Kokiri Sword is required for logic on the Stalfos and Lizalfos. Child has access
+to the right side maze from the lava room without the song of time as the time
+blocks are already warped in for child. Using this for right side maze without
+keys or Song-of-Time is in logic.
 
     Ice Cavern:
 

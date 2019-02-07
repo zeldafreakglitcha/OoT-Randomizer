@@ -69,8 +69,10 @@
                     (logic_fewer_tunic_requirements or has_ZoraTunic)"
         },
         "exits": {
-            "Gerudo Training Grounds Central Maze Right": "can_play(Song_of_Time)",
-            "Gerudo Training Grounds Hammer Room": "can_use(Hookshot) and can_reach(Adult_Gerudo_Training_Grounds)"
+            "Gerudo Training Grounds Central Maze Right": "
+                can_play(Song_of_Time) or can_reach(Child_Gerudo_Training_Grounds)",
+            "Gerudo Training Grounds Hammer Room": "
+                can_use(Hookshot) and can_reach(Adult_Gerudo_Training_Grounds)"
         }
     },
     {

@@ -256,7 +256,9 @@
             "Lake Hylia Gossip Stone (Southeast)": "True",
             "Lake Hylia Gossip Stone (Southwest)": "True",
             "Adult Water Temple": "
-                (Iron_Boots or (logic_morpha_with_scale and (Progressive_Scale, 2))) and 
+                (Iron_Boots or
+                 (logic_morpha_with_scale and (Progressive_Scale, 2) and
+                  not shuffle_dungeon_entrances)) and
                 can_use(Hookshot) and (logic_fewer_tunic_requirements or has_ZoraTunic)",
             "Child Water Temple": "False"
         },
