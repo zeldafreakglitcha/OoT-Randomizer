@@ -51,6 +51,9 @@ def main(settings, window=dummy_window()):
     for trick in logic_tricks.values():
         settings.__dict__[trick['name']] = trick['name'] in settings.allowed_tricks
 
+    if settings.shuffle_dungeon_entrances and \
+        (settings.mq_dungeons_random or settings.mq_dungeons != 0):
+        raise Exception('Shuffle Dungeon Entrances incompatible with Master Quest dungeons')
 
     # we load the rom before creating the seed so that error get caught early
     if settings.compress_rom == 'None' and not settings.create_spoiler:
