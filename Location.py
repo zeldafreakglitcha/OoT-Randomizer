@@ -46,7 +46,7 @@ class Location(object):
         return (
             not (self.minor_only and item.majoritem) and
             self.can_fill_fast(item) and
-            (not item.isadvancement or
+            (not item.advancement or
              (not self.is_disabled() and
               (not check_access or state.can_reach(self)))))
 

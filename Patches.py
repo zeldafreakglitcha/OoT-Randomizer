@@ -16,6 +16,7 @@ from Messages import read_messages, update_message_by_id, read_shop_items, \
         get_message_by_id
 from OcarinaSongs import replace_songs
 from MQ import patch_files, File, update_dmadata, insert_space, add_relocations
+from ItemList import item_table
 
 
 def patch_rom(spoiler:Spoiler, world:World, rom:LocalRom):
@@ -655,6 +656,44 @@ def patch_rom(spoiler:Spoiler, world:World, rom:LocalRom):
     Short_item_descriptions = [0x92EC84, 0x92F9E3, 0x92F2B4, 0x92F37A, 0x92F513, 0x92F5C6, 0x92E93B, 0x92EA12]
     for address in Short_item_descriptions:
         rom.write_byte(address,0x02)
+
+    #Gohma's save/death warp is optimized to use immediate 0 for the
+    #deku tree respawn. Use the delay slot before the switch table
+    #to hold Gohmas jump entrance as actual data so we can substitute
+    # the entrance index later.
+    rom.write_int32(0xB06290, 0x240E0000) #li t6, 0
+    rom.write_int32(0xB062B0, 0xAE0E0000) #sw t6, 0(s0)
+    rom.write_int32(0xBC60AC, 0x24180000) #li t8, 0
+    rom.write_int32(0xBC6160, 0x24180000) #li t8, 0
+    rom.write_int32(0xBC6168, 0xAD380000) #sw t8, 0(t1)
+
+    et_original = rom.read_bytes(0xB6FBF0, 4 * 0x0614)
+
+    def write_entrance(target_index, data_index):
+        for i in range(0, 4):
+            di = (data_index + i) * 4
+            rom.write_bytes(0xB6FBF0 + (target_index + i) * 4, et_original[di:di+4])
+
+    def write_entrances(target_indexes, data_index, specials=[]):
+        for index in target_indexes:
+            write_entrance(index, data_index)
+        for special in specials:
+            rom.write_int16(special, target_indexes[0])
+
+    if world.shuffle_dungeon_entrances:
+        for location in world.get_filled_locations():
+            if location.type != "Entrance":
+                continue;
+            entrance_location = item_table[location.name][3]
+            if entrance_location is None:
+                continue;
+            dungeon_location = location.item.special
+            zone_in_indexes = entrance_location["forwards"]
+            zone_in_data = dungeon_location["forwards"][0]
+            write_entrances(zone_in_indexes, zone_in_data, dungeon_location["specials"])
+            zone_out_indexes = dungeon_location["returns"]
+            zone_out_data = entrance_location["returns"][0]
+            write_entrances(zone_out_indexes, zone_out_data)
 
     # Fix text for Pocket Cucco.
     rom.write_byte(0xBEEF45, 0x0B)

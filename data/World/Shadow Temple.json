@@ -1,10 +1,10 @@
 [    
-	{
     {
         "region_name": "Shadow Temple Entryway",
         "dungeon": "Shadow Temple",
         "exits": {
             "Shadow Temple Beginning": "
+                Adult_Shadow_Temple and
                 can_see_with_lens and
                 (can_use(Hover_Boots) or can_use(Hookshot))"
         }

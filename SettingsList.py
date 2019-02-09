@@ -991,6 +991,32 @@ setting_infos = [
             default        = True,
             shared         = True,
             ),
+    Checkbutton(
+            name           = 'shuffle_dungeon_entrances',
+            args_help      = '''\
+                             Shuffle the entrances to dungeons including mediallion
+                             dungeons, stone dungeons, bottom of the well, ice cavern,
+                             and gerudo training grounds. Ganons castle is not shuffled.
+
+                             Dungeons will be guaranteed reachable at an age where link
+                             can fully complete the dungeon if 'All locations reachable'
+                             is selected. This may not be the vanilla intended age.
+                             ''',
+            gui_text       = 'Shuffle Dungeon Entrances',
+            gui_group      = 'shuffle',
+            gui_tooltip    = '''\
+                             Shuffle the entrances to dungeons including mediallion
+                             dungeons, stone dungeons, bottom of the well, ice cavern,
+                             and gerudo training grounds. Ganons castle is not shuffled.
+
+                             Dungeons will be guaranteed reachable at an age where link
+                             can fully complete the dungeon if 'All locations reachable'
+                             is selected. This may not be the vanilla intended age.
+                             ''',
+            default        = True,
+            shared         = True,
+            ),
+
     Combobox(
             name           = 'shuffle_scrubs',
             default        = 'off',
