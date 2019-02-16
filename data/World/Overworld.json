@@ -366,7 +366,7 @@
         "region_name": "Child Desert Colossus",
         "locations": {
             "GS Desert Colossus Bean Patch": "has_bottle and can_child_attack",
-            "Child Spirit Temple": "true"
+            "Child Spirit Temple": "True"
         },
         "exits": {
             "Colossus Fairy": "has_explosives"

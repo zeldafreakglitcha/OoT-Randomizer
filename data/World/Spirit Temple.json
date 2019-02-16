@@ -41,15 +41,15 @@
             "Spirit Temple Child Climb East Chest": "
                 has_projectile(both) or 
                 (((Small_Key_Spirit_Temple, 3) or 
-                    ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic)) and 
-                can_use(Silver_Gauntlets) and has_projectile(adult) and Adult_Spirit_Temple) or 
+                    ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic and not shuffle_dungeon_entrances)) and 
+                can_use(Silver_Gauntlets) and Adult_Spirit_Temple and has_projectile(adult)) or 
                 ((Small_Key_Spirit_Temple, 5) and Child_Spirit_Temple and 
                     has_projectile(child))",
             "Spirit Temple Child Climb North Chest": "
                 has_projectile(both) or 
                 (((Small_Key_Spirit_Temple, 3) or 
-                    ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic)) and 
-                can_use(Silver_Gauntlets) and has_projectile(adult) and Adult_Spirit_Temple) or 
+                    ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic and not shuffle_dungeon_entrances)) and 
+                can_use(Silver_Gauntlets) and Adult_Spirit_Temple and has_projectile(adult)) or 
                 ((Small_Key_Spirit_Temple, 5) and Child_Spirit_Temple and 
                     has_projectile(child))",
             "GS Spirit Temple Bomb for Light Room": "
@@ -73,7 +73,7 @@
         "dungeon": "Spirit Temple",
         "locations": {
             "Spirit Temple Compass Chest": "
-                can_use(Longshot) and can_play(Zeldas_Lullaby)",
+                can_use(Hookshot) and can_play(Zeldas_Lullaby)",
             "Spirit Temple Early Adult Right Chest": "
                 has_bow or Progressive_Hookshot or has_bombchus", 
                 #requires a very specific Bombchu use, Hover Boots can be skipped by jumping on top of the rolling rock.

@@ -3,14 +3,13 @@
         "region_name": "Fire Temple Lower",
         "dungeon": "Fire Temple",
         "locations": {
-            "Fire Temple Chest Near Boss": "True",
+            "Fire Temple Chest Near Boss" : "
+                (logic_fewer_tunic_requirements or
+                 (Adult_Fire_Temple and has_GoronTunic))",
             "Fire Temple Fire Dancer Chest": "
                 ((Small_Key_Fire_Temple, 8) or not keysanity) and can_use(Hammer) and Adult_Fire_Temple",
             "Fire Temple Boss Key Chest": "
                 ((Small_Key_Fire_Temple, 8) or not keysanity) and can_use(Hammer) and Adult_Fire_Temple",
-            "Fire Temple Big Lava Room Bombable Chest": "
-                (Small_Key_Fire_Temple, 2) and has_explosives and Adult_Fire_Temple",
-            "Fire Temple Big Lava Room Open Chest": "(Small_Key_Fire_Temple, 2)",
             "Volvagia Heart": "
                 Adult_Fire_Temple and has_GoronTunic and can_use(Hammer) and Boss_Key_Fire_Temple and
                 (Hover_Boots or (can_reach(Fire_Temple_Upper) and 
@@ -19,12 +18,26 @@
                 Adult_Fire_Temple and has_GoronTunic and can_use(Hammer) and Boss_Key_Fire_Temple and
                 (Hover_Boots or (can_reach(Fire_Temple_Upper) and 
                     (can_play(Song_of_Time) or has_explosives)))",
-            "GS Fire Temple Song of Time Room": "
-                (Small_Key_Fire_Temple, 2) and can_play(Song_of_Time) and Adult_Fire_Temple",
             "GS Fire Temple Basement": "
                 ((Small_Key_Fire_Temple, 8) or not keysanity) and can_use(Hammer) and Adult_Fire_Temple"
         },
         "exits": {
+            "Fire Temple Big Lava Room":"
+                (Small_Key_Fire_Temple, 2) and
+                (logic_fewer_tunic_requirements or
+                 (Adult_Fire_Temple and has_GoronTunic))"
+        }
+    },
+    {
+        "region_name": "Fire Temple Big Lava Room",
+        "dungeon": "Fire Temple",
+        "locations": {
+            "Fire Temple Big Lava Room Open Chest": "True",
+            "Fire Temple Big Lava Room Bombable Chest": "has_explosives and Adult_Fire_Temple",
+            "GS Fire Temple Song of Time Room": "can_play(Song_of_Time) and Adult_Fire_Temple"
+        },
+        "exits": {
+            "Fire Temple Lower":  "True",
             "Fire Temple Middle": "
                 #end of the road for child. Too short to jump up ledge in block push room
                 has_GoronTunic and (Small_Key_Fire_Temple, 4) and Progressive_Strength_Upgrade and

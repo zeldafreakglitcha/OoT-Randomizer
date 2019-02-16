@@ -5,9 +5,8 @@
         "locations": {
             "Forest Temple First Chest": "True",
             "GS Forest Temple First Room": "
-                can_use(Dins_Fire) or
-                (Adult_Forest_Temple and (can_use(Hookshot) or can_use(Bow))) or
-                (Child_Forest_Temple and (can_use(Boomerang) or can_use(Slingshot)))",
+                can_use(Dins_Fire) or 
+                has_projectile(either, Adult_Forest_Temple, Child_Forest_Temple)",
             "Forest Temple Chest Behind Lobby": "Adult_Forest_Temple or Kokiri_Sword",
             "GS Forest Temple Lobby": "
                 (Adult_Forest_Temple and can_use(Hookshot)) or
@@ -49,7 +48,8 @@
         "dungeon": "Forest Temple",
         "locations": {
             "Forest Temple Outside Hookshot Chest": "True",
-            "GS Forest Temple Outdoor East": "can_use(Hookshot)"
+            "GS Forest Temple Outdoor East": "
+                can_use(Hookshot) or can_use(Bow) or can_use(Dins_Fire) or has_explosives"
         },
         "exits": {
             "Forest Temple NE Outdoors": "True",

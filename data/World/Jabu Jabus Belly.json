@@ -21,7 +21,7 @@
                 (can_use(Hookshot) and Adult_Jabu_Jabus_Belly)",
             #Adult diving for this scrub is bugged, but this could be weaker
             "Jabu Deku Scrub Deku Nuts": "
-                Child_Jabu_Jabus_Belly and has_projectile(child)"
+                can_dive or (Child_Jabu_Jabus_Belly and has_projectile(child))"
         },
         "exits": {
             "Jabu Jabus Belly Beginning": "True",
