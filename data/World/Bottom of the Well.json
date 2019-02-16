@@ -4,7 +4,7 @@
         "dungeon": "Bottom of the Well",
         "exits": {
             "Bottom of the Well Main Area" : "
-                Child_Bottom_of_the_Well and can_child_attack or has_nuts"
+                Child_Bottom_of_the_Well and (can_child_attack or has_nuts)"
         }
     },
     {
