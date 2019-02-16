@@ -13,8 +13,17 @@
                 (Child_Forest_Temple and can_use(Boomerang))"
         },
         "exits": {
-            "Forest Temple NW Outdoors": "can_play(Song_of_Time) or Child_Forest_Temple",
-            "Forest Temple NE Outdoors": "can_use(Bow)",
+            #Child can get to the outdoors areas, but cannot complete any of the checks.
+            #Simplify logic definition by leaving the outdoors areas as adult only and
+            #connect child straight to the balcony on ability to kill the blue bubble.
+            #Note that child simply walks past the SoT block.
+            "Forest Temple Outdoors High Balconies": "
+                Child_Forest_Temple and
+                (has_explosives or
+                 ((can_use(Boomerang) or has_nuts or Buy_Deku_Shield) and
+                  (has_sticks or Kokiri_Sword or can_use(Slingshot))))",
+            "Forest Temple NW Outdoors": "Adult_Forest_Temple and can_play(Song_of_Time)",
+            "Forest Temple NE Outdoors": "Adult_Forest_Temple and can_use(Bow)",
             "Forest Temple Block Push Room": "(Small_Key_Forest_Temple, 1)"
         }
     },
@@ -22,38 +31,44 @@
         "region_name": "Forest Temple NW Outdoors",
         "dungeon": "Forest Temple",
         "locations": {
-            "Forest Temple Well Chest": "True",
-            "Forest Temple Map Chest": "True",
             "GS Forest Temple Outdoor West": "
-                (Adult_Forest_Temple and can_use(Longshot)) or 
+                can_use(Longshot) or 
                 (can_use(Hookshot) and can_reach(Forest_Temple_Outside_Upper_Ledge))"
         },
         "exits": {
-            "Forest Temple NE Outdoors": "True"
+            "Forest Temple NE Outdoors": "True",
+            "Forest Temple Outdoors High Balconies": "True"
         }
     },
     {
         "region_name": "Forest Temple NE Outdoors",
         "dungeon": "Forest Temple",
+        "locations": {
+            "Forest Temple Outside Hookshot Chest": "
+                can_use(Hookshot) or
+                can_reach(Forest_Temple_Falling_Room)",
+            "GS Forest Temple Outdoor East": "
+                can_use(Hookshot) or 
+                (can_reach(Forest_Temple_Falling_Room) and 
+                 (can_use(Bow) or can_use(Dins_Fire) or has_explosives))"
+        },
         "exits": {
-            "Forest Temple NE Outdoors Chest Platform":"can_use(Hookshot) and Adult_Forest_Temple",
+            "Forest Temple Outdoors High Balconies":"
+                can_use(Longshot) or (logic_forest_vines and can_use(Hookshot))",
+                #Longshot can grab some very high up vines to drain the well.
             "Forest Temple NW Outdoors": "
                 can_use(Iron_Boots) or can_use(Longshot) or (Progressive_Scale, 2) or 
-                (logic_forest_vines and can_use(Hookshot))", #Longshot can grab some very high up vines to drain the well.
-            "Forest Temple Lobby": "True"
+                (logic_forest_vines and can_use(Hookshot))",
+            "Forest Temple Lobby": "True",
+            "Forest Temple Falling Room": "False" #For some reason you can't actually activate this from below. Cool game.
         }
     },
     {
-        "region_name": "Forest Temple NE Outdoors Chest Platform",
+        "region_name": "Forest Temple Outdoors High Balconies",
         "dungeon": "Forest Temple",
         "locations": {
-            "Forest Temple Outside Hookshot Chest": "True",
-            "GS Forest Temple Outdoor East": "
-                can_use(Hookshot) or can_use(Bow) or can_use(Dins_Fire) or has_explosives"
-        },
-        "exits": {
-            "Forest Temple NE Outdoors": "True",
-            "Forest Temple Falling Room": "False" #For some reason you can't actually activate this from below. Cool game.
+            "Forest Temple Well Chest": "True",
+            "Forest Temple Map Chest": "True"
         }
     },
     {
@@ -63,7 +78,7 @@
             "Forest Temple Falling Room Chest": "True"
         },
         "exits": {
-            "Forest Temple NE Outdoors Chest Platform": "True",
+            "Forest Temple NE Outdoors": "True",
             "Forest Temple Boss Region": "can_use(Bow)"
         }
     },

@@ -53,7 +53,7 @@
             "Water Temple Boss Key Chest": "
                 (Small_Key_Water_Temple, 6) and 
                 (can_play(Zeldas_Lullaby) or keysanity) and 
-                (logic_water_bk_chest or (has_explosives and Progressive_Strength_Upgrade and Iron_Boots) or Hover_Boots) and 
+                ((logic_water_bk_chest and Iron_Boots) or (has_explosives and Progressive_Strength_Upgrade) or Hover_Boots) and 
                 can_use(Longshot)",
             "GS Water Temple South Basement": "
                 (can_use(Hookshot) or can_use(Hover_Boots)) and 

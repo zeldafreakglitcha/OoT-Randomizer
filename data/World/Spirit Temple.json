@@ -59,7 +59,7 @@
                 (Child_Spirit_Temple and 
                     (Small_Key_Spirit_Temple, 5) and has_projectile(child)) or 
                 (((Small_Key_Spirit_Temple, 3) or 
-                    ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic)) and 
+                    ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic and not shuffle_dungeon_entrances)) and 
                 can_use(Silver_Gauntlets) and Adult_Spirit_Temple and
                 (has_projectile(adult) or damage_multiplier != 'ohko' or 
                     has_bottle or can_use(Nayrus_Love)))"
@@ -93,7 +93,7 @@
         "locations": {
             "Spirit Temple Map Chest": "
                 ((has_explosives or (Small_Key_Spirit_Temple, 3) or 
-                    ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic)) and 
+                    ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic and not shuffle_dungeon_entrances)) and 
                 Magic_Meter and (Dins_Fire or 
                     (Fire_Arrows and has_bow and has_sticks))) or 
                 ((Small_Key_Spirit_Temple, 5) and has_explosives and 
@@ -102,7 +102,7 @@
                     Adult_Spirit_Temple and can_use(Silver_Gauntlets))",
             "Spirit Temple Sun Block Room Chest": "
                 ((has_explosives or (Small_Key_Spirit_Temple, 3) or 
-                    ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic)) and 
+                    ((Small_Key_Spirit_Temple, 2) and bombchus_in_logic and not shuffle_dungeon_entrances)) and 
                 Magic_Meter and (Dins_Fire or 
                     (Fire_Arrows and has_bow and has_sticks))) or 
                 ((Small_Key_Spirit_Temple, 5) and has_explosives and 
@@ -121,7 +121,7 @@
                     has_explosives and Child_Spirit_Temple) or 
                 (Progressive_Hookshot and can_use(Silver_Gauntlets) and Adult_Spirit_Temple and
                     ((Small_Key_Spirit_Temple, 3) or 
-                        ((Small_Key_Spirit_Temple, 2) and Boomerang and bombchus_in_logic)))",
+                        ((Small_Key_Spirit_Temple, 2) and Boomerang and bombchus_in_logic and not shuffle_dungeon_entrances)))",
             "GS Spirit Temple Lobby": "
                 can_use(Silver_Gauntlets) and Adult_Spirit_Temple and (Small_Key_Spirit_Temple, 3) and 
                 (Progressive_Hookshot or Hover_Boots)"
