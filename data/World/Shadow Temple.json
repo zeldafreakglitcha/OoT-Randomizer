@@ -1,16 +1,13 @@
 [    
     {
-        "region_name": "Adult Shadow Temple",
+        "region_name": "Shadow Temple Entryway",
         "dungeon": "Shadow Temple",
         "exits": {
             "Shadow Temple Beginning": "
-                can_see_with_lens and 
+                Adult_Shadow_Temple and
+                can_see_with_lens and
                 (can_use(Hover_Boots) or can_use(Hookshot))"
         }
-    },
-    {
-        "region_name": "Child Shadow Temple",
-        "dungeon": "Shadow Temple"
     },
     {
         "region_name": "Shadow Temple Beginning",
@@ -20,6 +17,7 @@
             "Shadow Temple Hover Boots Chest": "True"
         },
         "exits": {
+            "Shadow Temple Entryway": "True",
             "Shadow Temple First Beamos": "Hover_Boots"
         }
     },

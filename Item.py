@@ -89,6 +89,11 @@ class Item(object):
 
         return True
 
+    def spoilername(self):
+        spoiler = self.name
+        if self.type == "Entrance":
+            spoiler = self.name[6:]
+        return str('%s' % spoiler)
 
     def __str__(self):
         return str(self.__unicode__())

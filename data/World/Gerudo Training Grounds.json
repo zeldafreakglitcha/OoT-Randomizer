@@ -1,35 +1,21 @@
 [
     {
-        "region_name": "Adult Gerudo Training Grounds",
-        "dungeon": "Gerudo Training Grounds",
-        "exits": {
-            "Gerudo Training Grounds Lobby": "True"
-        }
-    },
-    {
-        "region_name": "Child Gerudo Training Grounds",
-        "dungeon": "Gerudo Training Grounds",
-        "exits": {
-            "Gerudo Training Grounds Lobby": "True"
-        }
-    },
-    {
         "region_name": "Gerudo Training Grounds Lobby",
         "dungeon": "Gerudo Training Grounds",
         "locations": {
             "Gerudo Training Grounds Lobby Left Chest": "
-                (can_reach(Adult_Gerudo_Training_Grounds) and can_use(Bow)) or
-                (can_reach(Child_Gerudo_Training_Grounds) and can_use(Slingshot))",
+                (Adult_Gerudo_Training_Grounds and can_use(Bow)) or
+                (Child_Gerudo_Training_Grounds and can_use(Slingshot))",
             "Gerudo Training Grounds Lobby Right Chest": "
-                (can_reach(Adult_Gerudo_Training_Grounds) and can_use(Bow)) or
-                (can_reach(Child_Gerudo_Training_Grounds) and can_use(Slingshot))",
-            "Gerudo Training Grounds Stalfos Chest": "can_reach(Adult_Gerudo_Training_Grounds) or Kokiri_Sword"
+                (Adult_Gerudo_Training_Grounds and can_use(Bow)) or
+                (Child_Gerudo_Training_Grounds and can_use(Slingshot))",
+            "Gerudo Training Grounds Stalfos Chest": "Adult_Gerudo_Training_Grounds or Kokiri_Sword"
         },
         "exits": {
-            "Gerudo Training Grounds Heavy Block Room": "can_use(Hookshot) and can_reach(Adult_Gerudo_Training_Grounds)",
+            "Gerudo Training Grounds Heavy Block Room": "can_use(Hookshot) and Adult_Gerudo_Training_Grounds",
             #Need to think harder on minimal logic for Lizalfos kill
             "Gerudo Training Grounds Lava Room": "
-                has_explosives and (can_reach(Adult_Gerudo_Training_Grounds) or Kokiri_Sword)",
+                has_explosives and (Adult_Gerudo_Training_Grounds or Kokiri_Sword)",
             "Gerudo Training Grounds Central Maze": "True"
         }
     },
@@ -65,14 +51,14 @@
         "locations": {
             "Gerudo Training Grounds Beamos Chest": "True",
             "Gerudo Training Grounds Underwater Silver Rupee Chest": "
-                can_reach(Adult_Gerudo_Training_Grounds) and can_use(Hookshot) and can_play(Song_of_Time) and Iron_Boots and 
+                Adult_Gerudo_Training_Grounds and can_use(Hookshot) and can_play(Song_of_Time) and Iron_Boots and 
                     (logic_fewer_tunic_requirements or has_ZoraTunic)"
         },
         "exits": {
             "Gerudo Training Grounds Central Maze Right": "
-                can_play(Song_of_Time) or can_reach(Child_Gerudo_Training_Grounds)",
+                can_play(Song_of_Time) or Child_Gerudo_Training_Grounds",
             "Gerudo Training Grounds Hammer Room": "
-                can_use(Hookshot) and can_reach(Adult_Gerudo_Training_Grounds)"
+                can_use(Hookshot) and Adult_Gerudo_Training_Grounds"
         }
     },
     {

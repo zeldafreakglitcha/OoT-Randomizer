@@ -35,8 +35,6 @@ class State(object):
 
 
     def can_reach(self, spot, resolution_hint=None):
-        if (spot == None):
-            return True
         try:
             spot_type = spot.spot_type
             if spot_type == 'Location':
@@ -89,6 +87,8 @@ class State(object):
 
 
     def has(self, item, count=1):
+        if (item == None):
+            return True;
         return self.prog_items[item] >= count
 
 
@@ -138,7 +138,7 @@ class State(object):
 
     def has_blue_fire(self):
         return self.has_bottle() and \
-                (self.can_reach('Ice Cavern')
+                (self.has('Adult Ice Cavern')
                 or self.can_reach('Ganons Castle Water Trial')
                 or self.has('Buy Blue Fire')
                 or (self.world.dungeon_mq['Gerudo Training Grounds'] and self.can_reach('Gerudo Training Grounds Stalfos Room')))
@@ -177,10 +177,6 @@ class State(object):
         else:
             return self.has(item)
 
-    def can_attack(self, adult_reach=None, child_reach=None):
-        return self.can_reach(adult_reach) or \
-               self.can_reach(child_reach) and self.can_child_attack()
-
     def can_buy_bombchus(self):
         return self.has('Buy Bombchu (5)') or \
                self.has('Buy Bombchu (10)') or \
@@ -208,9 +204,9 @@ class State(object):
         return self.has_bombs() or self.has_bombchus()
 
 
-    def can_blast_or_smash(self, adult_reach=None):
+    def can_blast_or_smash(self, adult_qualifier=None):
         return self.has_explosives() or \
-               (self.can_reach(adult_reach) and self.is_adult() and self.has('Hammer'))
+               (self.has(adult_qualifier) and self.is_adult() and self.has('Hammer'))
 
 
     def can_dive(self):
@@ -221,10 +217,10 @@ class State(object):
         return ((self.has('Magic Meter') and self.has('Lens of Truth')) or self.world.logic_lens != 'all')
 
 
-    def has_projectile(self, age='either', adult_check=None, child_check=None):
-        as_adult = self.can_reach(adult_check) and \
+    def has_projectile(self, age='either', adult_qualifier=None, child_qualifier=None):
+        as_adult = self.has(adult_qualifier) and \
             (self.has_explosives() or self.has_bow() or self.has('Progressive Hookshot'))
-        as_child = self.can_reach(child_check) and \
+        as_child = self.has(child_qualifier) and \
             (self.has_explosives() or self.has_slingshot() or self.has('Boomerang'))
         if age == 'child':
             return as_child
@@ -266,9 +262,10 @@ class State(object):
         # Warning: This only considers items that are marked as advancement items
         return self.heart_count() >= count
 
-    def has_shield(self, adult_reach=None, child_reach=None):
-        return self.can_reach(adult_reach) and (self.has('Mirror Shield') or self.has('Buy Hylian Shield')) or \
-        self.can_reach(child_reach) and self.has('Buy Deku Shield')
+    def has_shield(self, adult_qualifier=None, child_qualifier=None):
+        #The mirror shield does not count as it cannot reflect deku scrub attack
+        return self.has(adult_qualifier) and self.has('Buy Hylian Shield') or \
+        self.has(child_qualifier) and self.has('Buy Deku Shield')
 
     def heart_count(self):
         # Warning: This only considers items that are marked as advancement items
@@ -279,13 +276,13 @@ class State(object):
         )
 
 
-    def has_fire_source(self, adult_reach=None):
+    def has_fire_source(self, adult_qualifier=None):
         return self.can_use('Dins Fire') or \
-               self.can_reach(adult_reach) and self.can_use('Fire Arrows')
+               self.has(adult_qualifier) and self.can_use('Fire Arrows')
 
-    def has_fire_source_with_torch(self, adult_reach=None, child_reach=None):
-        return self.has_fire_source(adult_reach) or \
-               self.can_reach(child_reach) and self.has_sticks()
+    def has_fire_source_with_torch(self, adult_qualifier=None, child_qualifier=None):
+        return self.has_fire_source(adult_qualifier) or \
+               self.has(child_qualifier) and self.has_sticks()
 
     def guarantee_hint(self):
         if(self.world.hints == 'mask'):

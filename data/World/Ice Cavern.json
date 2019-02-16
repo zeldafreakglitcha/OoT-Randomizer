@@ -1,36 +1,31 @@
 [
     {
-        "region_name": "Adult Ice Cavern",
+        "region_name": "Ice Cavern Beginning",
         "dungeon": "Ice Cavern",
         "exits": {
-            "Ice Cavern": "True"
-        }
-    },
-    {
-        "region_name": "Child Ice Cavern",
-        "dungeon": "Ice Cavern",
-        "exits": {
-            "Ice Cavern": "Kokiri_Sword or can_reach(Adult_Ice_Cavern)"
+            "Ice Cavern": "Adult_Ice_Cavern or has_explosives or can_use(Dins_Fire)"
         }
     },
     {
         "region_name": "Ice Cavern",
         "dungeon": "Ice Cavern",
         "locations": {
-            "Ice Cavern Map Chest": "has_bottle and can_reach(Adult_Ice_Cavern)",
-            "Ice Cavern Compass Chest": "has_bottle and can_reach(Adult_Ice_Cavern)",
-            "Ice Cavern Iron Boots Chest": "has_bottle and can_reach(Adult_Ice_Cavern)",
-            "Ice Cavern Freestanding PoH": "has_bottle and can_reach(Adult_Ice_Cavern)",
-            "Sheik in Ice Cavern": "has_bottle and can_reach(Adult_Ice_Cavern)",
+            "Ice Cavern Map Chest": "has_bottle and Adult_Ice_Cavern",
+            "Ice Cavern Compass Chest": "has_blue_fire",
+            "Ice Cavern Iron Boots Chest": "has_blue_fire",
+            "Ice Cavern Freestanding PoH": "has_blue_fire",
+            "Sheik in Ice Cavern": "has_blue_fire and Adult_Ice_Cavern",
             "GS Ice Cavern Spinning Scythe Room": "
-                (can_reach(Adult_Ice_Cavern) and can_use(Hookshot)) or
-                (can_reach(Child_Ice_Cavern) and can_use(Boomerang))",
+                (Adult_Ice_Cavern and can_use(Hookshot)) or
+                (Child_Ice_Cavern and can_use(Boomerang))",
             "GS Ice Cavern Heart Piece Room": "
-                has_bottle and can_reach(Adult_Ice_Cavern) and
-                (can_use(Hookshot) or (can_reach(Child_Ice_Cavern) and can_use(Boomerang)))",
+                has_blue_fire and
+                ((Adult_Ice_Cavern and can_use(Hookshot)) or
+                 (Child_Ice_Cavern and can_use(Boomerang)))",
             "GS Ice Cavern Push Block Room": "
-                has_bottle and can_reach(Adult_Ice_Cavern) and
-                (can_use(Hookshot) or (can_reach(Child_Ice_Cavern) and can_use(Boomerang)))"
+                has_blue_fire and
+                ((Adult_Ice_Cavern and can_use(Hookshot)) or
+                 (Child_Ice_Cavern and can_use(Boomerang)))"
         }
     }
 ]

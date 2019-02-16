@@ -66,28 +66,18 @@
             "Child Desert Colossus": "can_play(Requiem_of_Spirit) and can_leave_forest",
             "Adult Desert Colossus": "can_play(Requiem_of_Spirit) and can_leave_forest",
 
-            "Adult Deku Tree": "Adult_Deku_Tree",
-            "Child Deku Tree": "Child_Deku_Tree",
-            "Adult Dodongos Cavern": "Adult_Dodongos_Cavern",
-            "Child Dodongos Cavern": "Child_Dodongos_Cavern",
-            "Adult Jabu Jabus Belly": "Adult_Jabu_Jabus_Belly",
-            "Child Jabu Jabus Belly": "Child_Jabu_Jabus_Belly",
-            "Adult Forest Temple": "Adult_Forest_Temple",
-            "Child Forest Temple": "Child_Forest_Temple",
-            "Adult Fire Temple": "Adult_Fire_Temple",
-            "Child Fire Temple": "Child_Fire_Temple",
-            "Adult Water Temple": "Adult_Water_Temple",
-            "Child Water Temple": "Child_Water_Temple",
-            "Adult Shadow Temple": "Adult_Shadow_Temple",
-            "Child Shadow Temple": "Child_Shadow_Temple",
-            "Adult Spirit Temple": "Adult_Spirit_Temple",
-            "Child Spirit Temple": "Child_Spirit_Temple",
-            "Adult Ice Cavern": "Adult_Ice_Cavern",
-            "Child Ice Cavern": "Child_Ice_Cavern",
-            "Adult Gerudo Training Grounds": "Adult_Gerudo_Training_Grounds",
-            "Child Gerudo Training Grounds": "Child_Gerudo_Training_Grounds",
-            "Adult Bottom of the Well": "Adult_Bottom_of_the_Well",
-            "Child Bottom of the Well": "Child_Bottom_of_the_Well"
+            "Deku Tree Lobby": "Adult_Deku_Tree or Child_Deku_Tree",
+            "Dodongos Cavern Beginning": "Adult_Dodongos_Cavern or Child_Dodongos_Cavern",
+            "Jabu Jabus Belly Beginning": "Adult_Jabu_Jabus_Belly or Child_Jabu_Jabus_Belly",
+            "Forest Temple Lobby": "Adult_Forest_Temple or Child_Forest_Temple",
+            "Fire Temple Lower": "Adult_Fire_Temple or Child_Fire_Temple",
+            "Water Temple Lobby": "Adult_Water_Temple or Child_Water_Temple",
+            "Shadow Temple Entryway": "Adult_Shadow_Temple or Child_Shadow_Temple",
+            "Spirit Temple Lobby": "Adult_Spirit_Temple or Child_Spirit_Temple",
+            "Ice Cavern Beginning": "Adult_Ice_Cavern or Child_Ice_Cavern",
+            "Gerudo Training Grounds Lobby": "
+                Adult_Gerudo_Training_Grounds or Child_Gerudo_Training_Grounds",
+            "Bottom of the Well": "Adult_Bottom_of_the_Well or Child_Bottom_of_the_Well"
         }
     },
     {
@@ -376,7 +366,7 @@
         "region_name": "Child Desert Colossus",
         "locations": {
             "GS Desert Colossus Bean Patch": "has_bottle and can_child_attack",
-            "Child Spirit Temple": "true"
+            "Child Spirit Temple": "True"
         },
         "exits": {
             "Colossus Fairy": "has_explosives"

@@ -1,17 +1,14 @@
-[   
+[
     {
-        "region_name": "Adult Bottom of the Well", 
-        "dungeon": "Bottom of the Well"
-    },
-    {
-        "region_name": "Child Bottom of the Well", 
+        "region_name": "Bottom of the Well",
         "dungeon": "Bottom of the Well",
         "exits": {
-                "Bottom of the Well": "can_child_attack or has_nuts"
+            "Bottom of the Well Main Area" : "
+                Child_Bottom_of_the_Well and can_child_attack or has_nuts"
         }
     },
     {
-        "region_name": "Bottom of the Well",
+        "region_name": "Bottom of the Well Main Area",
         "dungeon": "Bottom of the Well",
         "locations": {
             "Bottom of the Well Front Left Hidden Wall": "can_see_with_lens",
@@ -46,6 +43,9 @@
             "GS Well Like Like Cage": "
                 (Small_Key_Bottom_of_the_Well, 3) and Boomerang and can_see_with_lens",
             "Bottom of the Well Stick Pot": "True"
+        },
+        "exits": {
+            "Bottom of the Well" : "True"
         }
     }
 ]

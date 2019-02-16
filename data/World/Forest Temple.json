@@ -1,34 +1,19 @@
 [    
     {
-        "region_name": "Adult Forest Temple",
-        "dungeon": "Forest Temple",
-        "exits": {
-            "Forest Temple Lobby": "True"
-        }
-    },
-    {
-        "region_name": "Child Forest Temple",
-        "dungeon": "Forest Temple",
-        "exits": {
-            "Forest Temple Lobby": "True"
-        }
-    },
-    {
         "region_name": "Forest Temple Lobby",
         "dungeon": "Forest Temple",
         "locations": {
             "Forest Temple First Chest": "True",
             "GS Forest Temple First Room": "
-                can_use(Dins_Fire) or
-                (can_reach(Adult_Forest_Temple) and (can_use(Hookshot) or can_use(Bow))) or
-                (can_reach(Child_Forest_Temple) and (can_use(Boomerang) or can_use(Slingshot)))",
-            "Forest Temple Chest Behind Lobby": "can_reach(Adult_Forest_Temple) or Kokiri_Sword",
+                can_use(Dins_Fire) or 
+                has_projectile(either, Adult_Forest_Temple, Child_Forest_Temple)",
+            "Forest Temple Chest Behind Lobby": "Adult_Forest_Temple or Kokiri_Sword",
             "GS Forest Temple Lobby": "
-                (can_reach(Adult_Forest_Temple) and can_use(Hookshot)) or
-                (can_reach(Child_Forest_Temple) and can_use(Boomerang))"
+                (Adult_Forest_Temple and can_use(Hookshot)) or
+                (Child_Forest_Temple and can_use(Boomerang))"
         },
         "exits": {
-            "Forest Temple NW Outdoors": "can_play(Song_of_Time) or can_reach(Child_Forest_Temple)",
+            "Forest Temple NW Outdoors": "can_play(Song_of_Time) or Child_Forest_Temple",
             "Forest Temple NE Outdoors": "can_use(Bow)",
             "Forest Temple Block Push Room": "(Small_Key_Forest_Temple, 1)"
         }
@@ -40,7 +25,7 @@
             "Forest Temple Well Chest": "True",
             "Forest Temple Map Chest": "True",
             "GS Forest Temple Outdoor West": "
-                (can_reach(Adult_Forest_Temple) and can_use(Longshot)) or 
+                (Adult_Forest_Temple and can_use(Longshot)) or 
                 (can_use(Hookshot) and can_reach(Forest_Temple_Outside_Upper_Ledge))"
         },
         "exits": {
@@ -51,7 +36,7 @@
         "region_name": "Forest Temple NE Outdoors",
         "dungeon": "Forest Temple",
         "exits": {
-            "Forest Temple NE Outdoors Chest Platform":"can_use(Hookshot) and can_reach(Adult_Forest_Temple)",
+            "Forest Temple NE Outdoors Chest Platform":"can_use(Hookshot) and Adult_Forest_Temple",
             "Forest Temple NW Outdoors": "
                 can_use(Iron_Boots) or can_use(Longshot) or (Progressive_Scale, 2) or 
                 (logic_forest_vines and can_use(Hookshot))", #Longshot can grab some very high up vines to drain the well.
@@ -63,7 +48,8 @@
         "dungeon": "Forest Temple",
         "locations": {
             "Forest Temple Outside Hookshot Chest": "True",
-            "GS Forest Temple Outdoor East": "can_use(Hookshot)"
+            "GS Forest Temple Outdoor East": "
+                can_use(Hookshot) or can_use(Bow) or can_use(Dins_Fire) or has_explosives"
         },
         "exits": {
             "Forest Temple NE Outdoors": "True",
@@ -86,16 +72,16 @@
         "dungeon": "Forest Temple",
         "locations": {
             "Forest Temple Block Push Chest": "
-                (can_reach(Adult_Forest_Temple) and can_use(Bow)) or
-                (can_reach(Child_Forest_Temple) and can_use(Slingshot))"
+                (Adult_Forest_Temple and can_use(Bow)) or
+                (Child_Forest_Temple and can_use(Slingshot))"
         },
         "exits": {
             #end of the road for child forest. No hovers and too short to climb push blocks
-            "Forest Temple Outside Upper Ledge": "can_reach(Adult_Forest_Temple) and can_use(Hover_Boots)",
+            "Forest Temple Outside Upper Ledge": "Adult_Forest_Temple and can_use(Hover_Boots)",
             "Forest Temple Bow Region": "
-                Progressive_Strength_Upgrade and (Small_Key_Forest_Temple, 3) and can_reach(Adult_Forest_Temple)",
+                Progressive_Strength_Upgrade and (Small_Key_Forest_Temple, 3) and Adult_Forest_Temple",
             "Forest Temple Straightened Hall": "
-                Progressive_Strength_Upgrade and (Small_Key_Forest_Temple, 2) and can_use(Bow) and can_reach(Adult_Forest_Temple)"
+                Progressive_Strength_Upgrade and (Small_Key_Forest_Temple, 2) and can_use(Bow) and Adult_Forest_Temple"
         }
     },
     {
@@ -139,8 +125,8 @@
             "Phantom Ganon Heart": "Boss_Key_Forest_Temple",
             "Phantom Ganon": "Boss_Key_Forest_Temple",
             "GS Forest Temple Basement": "
-                (can_reach(Adult_Forest_Temple) and can_use(Hookshot)) or
-                (can_reach(Child_Forest_Temple) and can_use(Boomerang))"
+                (Adult_Forest_Temple and can_use(Hookshot)) or
+                (Child_Forest_Temple and can_use(Boomerang))"
         }
     }
 ]

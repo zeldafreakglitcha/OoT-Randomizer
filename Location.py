@@ -66,6 +66,11 @@ class Location(object):
         return (self.disabled == DisableType.DISABLED) or \
                (self.disabled == DisableType.PENDING and self.locked)
 
+    def spoilername(self):
+        spoiler = self.name
+        if self.type == "Entrance":
+            spoiler = self.name[6:]
+        return str('%s' % spoiler)
 
     def __str__(self):
         return str(self.__unicode__())

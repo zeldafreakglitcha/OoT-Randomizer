@@ -1,37 +1,32 @@
 [
     {
-        "region_name": "Adult Deku Tree",
-        "dungeon": "Deku Tree",
-        "exits": {
-            "Deku Tree Lobby": "True"
-        }
-    },
-    {
-        "region_name": "Child Deku Tree",
-        "dungeon": "Deku Tree",
-        "exits": {
-            "Deku Tree Lobby": "True"
-        }
-    },
-    {
         "region_name": "Deku Tree Lobby",
         "dungeon": "Deku Tree",
         "locations": {
             "Deku Tree Lobby Chest": "True",
             "Deku Tree Compass Chest": "True",
             "Deku Tree Compass Room Side Chest": "True",
-            "Deku Tree Basement Chest": "can_attack(Adult_Deku_Tree, Child_Deku_Tree) or has_nuts",
-            "GS Deku Tree Compass Room": "can_attack(Adult_Deku_Tree, Child_Deku_Tree)",
+            "Deku Tree Basement Chest": "Adult_Deku_Tree or can_child_attack or has_nuts",
+            "GS Deku Tree Compass Room": "Adult_Deku_Tree or can_child_attack",
             "GS Deku Tree Basement Vines": "
                 has_projectile(Adult_Deku_Tree, Child_Deku_Tree) or 
-                (logic_deku_basement_gs and (can_reach(Adult_Deku_Tree) or has_sticks or Kokiri_Sword))",
-            "GS Deku Tree Basement Gate": "can_attack(Adult_Deku_Tree, Child_Deku_Tree)"
+                (logic_deku_basement_gs and (Adult_Deku_Tree or has_sticks or Kokiri_Sword))",
+            "GS Deku Tree Basement Gate": "Adult_Deku_Tree or can_child_attack",
+            "GS Deku Tree Basement Back Room": "
+                (has_fire_source_with_torch(Adult_Deku_Tree, Child_Deku_Tree) and
+                 ((can_use(Slingshot) and Child_Deku_Tree) or
+                  (can_use(Bow) and Adult_Deku_Tree)) and
+                 can_blast_or_smash(Adult_Deku_Tree) and
+                 ((can_use(Hookshot) and Adult_Deku_Tree) or
+                  (can_use(Boomerang) and Child_Deku_Tree))) or
+                (Adult_Deku_Tree and Child_Deku_Tree and has_explosives and
+                 can_use(Boomerang) and (has_sticks or can_use(Dins_Fire)))"
         },
         "exits": {
             "Deku Tree Slingshot Room": "has_shield(Adult_Deku_Tree, Child_Deku_Tree)",
             "Deku Tree Boss Room": "
                 has_fire_source_with_torch(Adult_Deku_Tree, Child_Deku_Tree) and
-                (can_reach(Adult_Deku_Tree) or can_use(Slingshot))"
+                (Adult_Deku_Tree or can_use(Slingshot))"
         }
     },
     {
@@ -49,16 +44,12 @@
         "region_name": "Deku Tree Boss Room",
         "dungeon": "Deku Tree",
         "locations": {
-            "GS Deku Tree Basement Back Room": "
-                has_explosives and
-                ((can_use(Boomerang) and can_reach(Child_Deku_Tree)) or
-                 (can_use(Bow) and can_use(Hookshot) and can_reach(Adult_Deku_Tree)))",
             "Queen Gohma Heart": "
                 has_shield(Adult_Deku_Tree, Child_Deku_Tree) and 
-                (can_reach(Adult_Deku_Tree) or Kokiri_Sword or has_sticks)",
+                (Adult_Deku_Tree or Kokiri_Sword or has_sticks)",
             "Queen Gohma": "
                 has_shield(Adult_Deku_Tree, Child_Deku_Tree) and 
-                (can_reach(Adult_Deku_Tree) or Kokiri_Sword or has_sticks)"
+                (Adult_Deku_Tree or Kokiri_Sword or has_sticks)"
         }
     }
 ]
