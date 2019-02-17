@@ -35,24 +35,21 @@
     {
         "region_name": "Forest Temple NE Outdoors",
         "dungeon": "Forest Temple",
+        "locations": {
+            "Forest Temple Outside Hookshot Chest": "
+                (Adult_Forest_Temple and can_use(Hookshot)) or
+                can_reach(Forest_Temple_Falling_Room)",
+            "GS Forest Temple Outdoor East": "
+                Adult_Forest_Temple and 
+                (can_use(Hookshot) or 
+                 (can_reach(Forest_Temple_Falling_Room) and 
+                  (can_use(Bow) or can_use(Dins_Fire) or has_explosives)))"
+        },
         "exits": {
-            "Forest Temple NE Outdoors Chest Platform":"can_use(Hookshot) and Adult_Forest_Temple",
             "Forest Temple NW Outdoors": "
                 can_use(Iron_Boots) or can_use(Longshot) or (Progressive_Scale, 2) or 
                 (logic_forest_vines and can_use(Hookshot))", #Longshot can grab some very high up vines to drain the well.
-            "Forest Temple Lobby": "True"
-        }
-    },
-    {
-        "region_name": "Forest Temple NE Outdoors Chest Platform",
-        "dungeon": "Forest Temple",
-        "locations": {
-            "Forest Temple Outside Hookshot Chest": "True",
-            "GS Forest Temple Outdoor East": "
-                can_use(Hookshot) or can_use(Bow) or can_use(Dins_Fire) or has_explosives"
-        },
-        "exits": {
-            "Forest Temple NE Outdoors": "True",
+            "Forest Temple Lobby": "True",
             "Forest Temple Falling Room": "False" #For some reason you can't actually activate this from below. Cool game.
         }
     },
@@ -63,7 +60,7 @@
             "Forest Temple Falling Room Chest": "True"
         },
         "exits": {
-            "Forest Temple NE Outdoors Chest Platform": "True",
+            "Forest Temple NE Outdoors": "True",
             "Forest Temple Boss Region": "can_use(Bow)"
         }
     },
