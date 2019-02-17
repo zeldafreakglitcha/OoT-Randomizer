@@ -41,6 +41,15 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
         entrancemap = { world.id : { item.name : item for item in world.itempool if item.type == 'Entrance' } for world in worlds }
         entrancepool = [[entrancemap[world.id][age + ' ' + entrance] for age in ['Child', 'Adult']] for world in worlds for entrance in entrancelist ]
 
+        #If ALR is off, we need to declare at least one age or the other for Deku/DC as progression
+        #for state collection purposes. Rando it. We cannot do this for ALR, as ALR placement is too
+        #heavily restricted to be able to handle any extra restrictions. This can be fixed by not
+        #overloading is_advancement with these ER special case semantics.
+        if worlds[0].check_beatable_only:
+            for world in worlds:
+                for entrance in [ 'Deku Tree', 'Dodongos Cavern' ]:
+                    entrancemap[world.id][random.choice(['Child', 'Adult']) + ' ' + entrance].advancement = True
+
     itempool =     [item for world in worlds for item in world.itempool if item.type != 'Shop' and item.type != 'Song' and item.type != 'Entrance']
     
     if worlds[0].shuffle_song_items:
