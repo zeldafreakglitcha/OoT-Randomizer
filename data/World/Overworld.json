@@ -64,7 +64,7 @@
             "Shadow Temple Warp Region": "
                 can_play(Nocturne_of_Shadow) and can_leave_forest",
             "Child Desert Colossus": "can_play(Requiem_of_Spirit) and can_leave_forest",
-            "Adult Desert Colossus": "can_play(Requiem_of_Spirit) and can_leave_forest",
+            "Adult Desert Colossus": "is_adult and can_play(Requiem_of_Spirit) and can_leave_forest",
 
             "Deku Tree Lobby": "Adult_Deku_Tree or Child_Deku_Tree",
             "Dodongos Cavern Beginning": "Adult_Dodongos_Cavern or Child_Dodongos_Cavern",
