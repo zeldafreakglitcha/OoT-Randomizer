@@ -25,6 +25,8 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
     entrance_locations = []
     for world in worlds:
         for entrance in entrancelist:
+            if entrance == 'Deku Tree' and not worlds[0].open_forest:
+                continue
             child_location = world.get_location('Child ' + entrance)
             child_location.next = world.get_location('Adult ' + entrance)
             entrance_locations.append(child_location)
@@ -53,6 +55,8 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
         entrancepool = []
         for world in worlds:
             for entrance in entrancelist:
+                if entrance == 'Deku Tree' and not worlds[0].open_forest:
+                    continue
                 child_item = entrancemap[world.id]['Child ' + entrance]
                 child_item.next = entrancemap[world.id]['Adult ' + entrance]
                 entrancepool.append(child_item)
@@ -64,7 +68,10 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
         # fixed by not overloading is_advancement with these ER special case semantics.
         if worlds[0].check_beatable_only:
             for world in worlds:
-                for entrance in [ 'Deku Tree', 'Dodongos Cavern' ]:
+                either_age_dungeons = [ 'Dodongos Cavern' ];
+                if  worlds[0].open_forest:
+                    either_age_dungeons.append('Deku Tree')
+                for entrance in either_age_dungeons:
                     entrancemap[world.id][random.choice(['Child', 'Adult']) + ' ' + entrance].advancement = True
 
     

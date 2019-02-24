@@ -673,7 +673,8 @@ def get_pool_core(world):
     for age in ['Adult', 'Child' ]:
         for entrance in entrancelist:
             name = age + " " + entrance
-            if world.shuffle_dungeon_entrances:
+            if world.shuffle_dungeon_entrances and \
+               (entrance != 'Deku Tree' or world.open_forest):
                 pool.extend([name])
             else:
                 placed_items[name] = name;
