@@ -13,6 +13,7 @@ class Item(object):
         self.price = self.special.get('price')
         self.world = world
         self.looks_like_item = None
+        self.next = None
 
 
     item_worlds_to_fix = {}

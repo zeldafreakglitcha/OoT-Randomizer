@@ -1,7 +1,7 @@
 from State import State
 from Region import Region
 from Entrance import Entrance
-from Location import Location, LocationFactory
+from Location import Location, LocationFactory, DisableType
 from LocationList import business_scrubs
 from DungeonList import create_dungeons
 from Rules import set_rules, set_shop_rules
@@ -304,6 +304,12 @@ class World(object):
         if promote_disabled and location.disabled == DisableType.PENDING:
             location.disabled = DisableType.DISABLED
 
+        # I confess that tail recursion on a linked list is not pythonic, but I
+        # really want to avoid listifying the vast majority of items given that
+        # fill is so performance sensitive.
+        if location.next is not None:
+            self.push_item(location.next, item.next, promote_disabled)
+
     def pop_item(self, location, demote_disabled=False):
         if not isinstance(location, Location):
             location = self.get_location(location)
@@ -319,6 +325,9 @@ class World(object):
 
         if demote_disabled and location.disabled == DisableType.DISABLED:
             location.disabled = DisableType.Pending
+
+        if location.next is not None:
+            self.pop_item(location.next, demote_disabled)
 
 
     def get_locations(self):

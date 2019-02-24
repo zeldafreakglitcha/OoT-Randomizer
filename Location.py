@@ -28,6 +28,7 @@ class Location(object):
             self.filter_tags = None
         else:
             self.filter_tags = list(filter_tags) + [hint]
+        self.next = None
 
 
     def copy(self, new_region):
@@ -52,7 +53,8 @@ class Location(object):
             self.can_fill_fast(item) and
             (not item.advancement or
              (not self.is_disabled() and
-              (not check_access or state.can_reach(self)))))
+              (not check_access or state.can_reach(self)))) and
+            (self.next == None or self.next.can_fill(state, item.next, check_access)))
 
 
     def can_fill_fast(self, item, manual=False):
