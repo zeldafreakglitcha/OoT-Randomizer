@@ -54,6 +54,10 @@ def main(settings, window=dummy_window()):
 
     settings.load_distribution()
 
+    if settings.shuffle_dungeon_entrances and \
+        (settings.mq_dungeons_random or settings.mq_dungeons != 0):
+        raise Exception('Shuffle Dungeon Entrances incompatible with Master Quest dungeons')
+
     # we load the rom before creating the seed so that error get caught early
     if settings.compress_rom == 'None' and not settings.create_spoiler:
         raise Exception('`No Output` must have spoiler enabled to produce anything.')
