@@ -369,7 +369,7 @@ class WorldDistribution(object):
                 else:
                     raise RuntimeError('Reward unknown in world %d: %s' % (world.id + 1, record.item))
             count += 1
-            world.push_item(boss, reward, True)
+            world.push_item(boss, reward, False, True)
         return count
 
 
@@ -405,7 +405,7 @@ class WorldDistribution(object):
 
             if record.price is not None:
                 item.price = record.price
-            location.world.push_item(location, item, True)
+            location.world.push_item(location, item, False, True)
             if item.advancement:
                 states_after = State.get_states_with_items([world.state for world in worlds], reduce(lambda a, b: a + b, item_pools))
                 if not State.can_beat_game(states_after, True):

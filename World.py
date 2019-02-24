@@ -286,7 +286,7 @@ class World(object):
         return [location for location in self.get_locations() if location.item is not None and location.item.name == item]
 
 
-    def push_item(self, location, item, manual=False):
+    def push_item(self, location, item, promote_disabled=False, manual=False):
         if not isinstance(location, Location):
             location = self.get_location(location)
 
@@ -300,6 +300,25 @@ class World(object):
             logging.getLogger('').debug('Placed %s [World %d] at %s [World %d]', item, item.world.id if hasattr(item, 'world') else -1, location, location.world.id if hasattr(location, 'world') else -1)
         else:
             raise RuntimeError('Cannot assign item %s to location %s.' % (item, location))
+
+        if promote_disabled and location.disabled == DisableType.PENDING:
+            location.disabled = DisableType.DISABLED
+
+    def pop_item(self, location, demote_disabled=False):
+        if not isinstance(location, Location):
+            location = self.get_location(location)
+
+        item = location.item
+
+        if item is not None:
+            item.location = None
+            item.price = item.special.get('Price')
+
+        location.item = None
+        location.price = None
+
+        if demote_disabled and location.disabled == DisableType.DISABLED:
+            location.disabled = DisableType.Pending
 
 
     def get_locations(self):

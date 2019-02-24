@@ -254,9 +254,7 @@ def fill_ownworld_restrictive(window, worlds, locations, ownpool, itempool, desc
             except FillError as e:
                 logging.getLogger('').info("Failed to place %s items for world %s. Will retry %s more times", description, (world.id+1), world_attempts)
                 for location in prize_locs_dict[world.id]:
-                    location.item = None
-                    if location.disabled == DisableType.DISABLED:
-                        location.disabled = DisableType.PENDING
+                    world.pop_item(location, True)
                 logging.getLogger('').info('\t%s' % str(e))
                 continue
             break
@@ -341,7 +339,6 @@ def fill_restrictive(window, worlds, base_state_list, locations, itempool, count
                 if location.disabled == DisableType.PENDING:
                     if not State.can_beat_game(maximum_exploration_state_list):
                         continue
-                    location.disabled = DisableType.DISABLED
 
                 # location is reachable (and reachable in item's world), so place item here
                 spot_to_fill = location
@@ -359,7 +356,8 @@ def fill_restrictive(window, worlds, base_state_list, locations, itempool, count
                 raise FillError('Game unbeatable: No more spots to place %s [World %d]' % (item_to_place, item_to_place.world.id))
 
         # Place the item in the world and continue
-        spot_to_fill.world.push_item(spot_to_fill, item_to_place)
+        spot_to_fill.world.push_item(spot_to_fill, item_to_place, True)
+
         locations.remove(spot_to_fill)
         window.fillcount += 1
         window.update_progress(5 + ((window.fillcount / window.locationcount) * 30))
