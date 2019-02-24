@@ -5,7 +5,7 @@ from Rules import set_shop_rules
 from Location import DisableType
 from ItemPool import junk_pool, item_groups
 from LocationList import location_groups
-from ItemPool import songlist, get_junk_item, junk_pool, item_groups
+from ItemPool import songlist, get_junk_item, junk_pool, item_groups, entrancelist
 from ItemList import item_table
 from Item import ItemFactory
 from functools import reduce
@@ -22,6 +22,13 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
         'Song from Ocarina of Time', 'Song at Windmill', 'Sheik Forest Song', 'Sheik at Temple',
         'Sheik in Crater', 'Sheik in Ice Cavern', 'Sheik in Kakariko', 'Sheik at Colossus']]
 
+    entrance_locations = []
+    for world in worlds:
+        for entrance in entrancelist:
+            child_location = world.get_location('Child ' + entrance)
+            child_location.next = world.get_location('Adult ' + entrance)
+            entrance_locations.append(child_location)
+
     shop_locations = [location for world in worlds for location in world.get_unfilled_locations() if location.type == 'Shop' and location.price == None]
 
     # If not passed in, then get a shuffled list of locations to fill in
@@ -29,16 +36,37 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
         fill_locations = [location for world in worlds for location in world.get_unfilled_locations() \
             if location not in song_locations and \
                location not in shop_locations and \
+               location.type != 'Entrance' and \
                location.type != 'GossipStone']
     world_states = [world.state for world in worlds]
 
-    window.locationcount = len(fill_locations) + len(song_locations) + len(shop_locations)
+    window.locationcount = len(fill_locations) + len(song_locations) + len(shop_locations) + len(entrance_locations)
     window.fillcount = 0
 
     # Generate the itempools
     shopitempool = [item for world in worlds for item in world.itempool if item.type == 'Shop']
     songitempool = [item for world in worlds for item in world.itempool if item.type == 'Song']
-    itempool =     [item for world in worlds for item in world.itempool if item.type != 'Shop' and item.type != 'Song']
+    itempool =     [item for world in worlds for item in world.itempool if item.type != 'Shop' and item.type != 'Song' and item.type != 'Entrance']
+
+    if worlds[0].shuffle_dungeon_entrances:
+        entrancemap = { world.id : { item.name : item for item in world.itempool if item.type == 'Entrance' } for world in worlds }
+        entrancepool = []
+        for world in worlds:
+            for entrance in entrancelist:
+                child_item = entrancemap[world.id]['Child ' + entrance]
+                child_item.next = entrancemap[world.id]['Adult ' + entrance]
+                entrancepool.append(child_item)
+
+        # If ALR is off, we need to declare at least one age or the other for Deku/DC as progression
+        # for state collection purposes. Rando it. We cannot do this for ALR, as ALR placement is too
+        # heavily restricted to be able to handle any extra restrictions. ALR does not need the state
+        # collection, as ALR already protects itself for single placements out of reach. This can all be
+        # fixed by not overloading is_advancement with these ER special case semantics.
+        if worlds[0].check_beatable_only:
+            for world in worlds:
+                for entrance in [ 'Deku Tree', 'Dodongos Cavern' ]:
+                    entrancemap[world.id][random.choice(['Child', 'Adult']) + ' ' + entrance].advancement = True
+
     
     if worlds[0].shuffle_song_items:
         itempool.extend(songitempool)
@@ -73,7 +101,19 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
     worlds[0].distribution.fill(window, worlds, [shop_locations, song_locations, fill_locations], [shopitempool, dungeon_items, songitempool, progitempool, prioitempool, restitempool])
     itempool = progitempool + prioitempool + restitempool
 
-    # We place all the shop items first. Like songs, they have a more limited
+    #We place entrances first. Like songs and shops, the placement is heavily
+    #limited with the extra complication that Deku Tree and DC are placed without
+    #logic to handle ALR with either age but not always both. This can be fixed
+    #allowing exclusions or non-trivial logic to ALR condition definition.
+    if worlds[0].shuffle_dungeon_entrances:
+        fill_ownworld_restrictive(window, worlds, entrance_locations, entrancepool, \
+                                  itempool + songitempool + shopitempool + dungeon_items, "entrance")
+        #Now put every entrance access fully into logic
+        for entrance in entrancepool:
+            entrance.advancement = True
+            entrance.next.advancement = True
+
+    # We place all the shop items next. Like songs, they have a more limited
     # set of locations that they can be placed in, so placing them first will
     # reduce the odds of creating unbeatable seeds. This also avoids needing
     # to create item rules for every location for whether they are a shop item
@@ -315,6 +355,12 @@ def fill_restrictive(window, worlds, base_state_list, locations, itempool, count
                 # in the world the item is for. This is to prevent early restrictions
                 # in one world being placed late in another world. If this is not
                 # done then one player may be waiting a long time for other players.
+                # For entrance placements it will only look at the master (Child)
+                # entrances, however entrances are currently placed first in their
+                # own pass with no dependencies between placements so this is a nop.
+                # This check can be booted to Locations.can_fill() to resolve
+                # more generically and should be done if entrances are ever placed in
+                # later fill passes.
                 if location.world.id != item_to_place.world.id:
                     try:
                         source_location = item_to_place.world.get_location(location.name)

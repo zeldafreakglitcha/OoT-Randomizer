@@ -789,6 +789,24 @@ location_table = {
     "Zoras River Waterfall Gossip Stone":              ("GossipStone", None,  None, None,                     None,                     None),
 }
 
+entrance_location_table = {
+    "Deku Tree":                                       ("Entrance",    None,  None, "Kokiri Forest",          None,                     ("Kokiri", "Entrance")),
+    "Dodongos Cavern":                                 ("Entrance",    None,  None, "Death Mountain Trail",   None,                     ("Death Mountain", "Entrance")),
+    "Jabu Jabus Belly":                                ("Entrance",    None,  None, "Zora's Fountain",        None,                     ("Entrance")),
+    "Forest Temple":                                   ("Entrance",    None,  None, "Sacred Forest Meadow",   None,                     ("Kokiri", "Entrance")),
+    "Fire Temple":                                     ("Entrance",    None,  None, "Death Mountain Crater",  None,                     ("Death Mountain", "Entrance")),
+    "Water Temple":                                    ("Entrance",    None,  None, "Lake Hylia",             None,                     ("Entrance")),
+    "Shadow Temple":                                   ("Entrance",    None,  None, "the Graveyard",          None,                     ("Kakariko", "Entrance")),
+    "Spirit Temple":                                   ("Entrance",    None,  None, "Desert Colossus",        None,                     ("Gerudo, Entrance")),
+    "Ice Cavern":                                      ("Entrance",    None,  None, "Zora's Fountain",        None,                     ("Entrance")),
+    "Gerudo Training Grounds":                         ("Entrance",    None,  None, "Gerudo's Fortress",      None,                     ("Gerudo", "Entrance")),
+    "Bottom of the Well":                              ("Entrance",    None,  None, "Kakariko Village",       None,                     ("Kakariko", "Entrance")),
+}
+
+for entrance, data in entrance_location_table.items():
+    location_table["Adult " + entrance] = tuple(data)
+    location_table["Child " + entrance] = tuple(data)
+
 # Business Scrub Details
 business_scrubs = [
     # id   price  text   text replacement
