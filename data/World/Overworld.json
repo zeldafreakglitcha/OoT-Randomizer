@@ -29,15 +29,20 @@
     {
         "region_name": "Outside Deku Tree",
         "locations": {
-            "Deku Baba Sticks": "is_adult or Kokiri_Sword or Boomerang",
+            #The Babas despawn for Adult on forest temple completion. For vanilla forest temple
+            #placement this is not an issue as Adult can go back to forest for the Baba's there.
+            #Entrance rando cannot rely on this for the case forest completion was done on non
+            #repeatable access.
+            "Deku Baba Sticks": "(is_adult and not shuffle_dungeon_entrances) or Kokiri_Sword or Boomerang",
             "Deku Baba Nuts": "
-                is_adult or has_slingshot or has_sticks or 
+                (is_adult and not shuffle_dungeon_entrances) or has_slingshot or has_sticks or 
                 has_explosives or Kokiri_Sword or can_use(Dins_Fire)",
             "Deku Tree Gossip Stone (Left)": "True",
-            "Deku Tree Gossip Stone (Right)": "True"
+            "Deku Tree Gossip Stone (Right)": "True",
+            "Child Deku Tree": "is_child",
+            "Adult Deku Tree": "is_adult and shuffle_dungeon_entrances"
         },
         "exits": {
-            "Deku Tree Lobby": "is_child",
             "Kokiri Forest": "True"
         }
     },
@@ -56,7 +61,42 @@
             "Lake Hylia": "can_play(Serenade_of_Water) and can_leave_forest",
             "Shadow Temple Warp Region": "
                 can_play(Nocturne_of_Shadow) and can_leave_forest",
-            "Desert Colossus": "can_play(Requiem_of_Spirit) and can_leave_forest"
+            "Desert Colossus": "can_play(Requiem_of_Spirit) and can_leave_forest",
+
+            #Really should just rip through this in a for loop somewhere
+            "Deku Tree Lobby": "
+                (Adult_Deku_Tree and is_adult) or
+                (Child_Deku_Tree and is_child)",
+            "Dodongos Cavern Beginning": "
+                (Adult_Dodongos_Cavern and is_adult) or
+                (Child_Dodongos_Cavern and is_child)",
+            "Jabu Jabus Belly Beginning": "
+                (Adult_Jabu_Jabus_Belly and is_adult) or
+                (Child_Jabu_Jabus_Belly and is_child)",
+            "Forest Temple Lobby": "
+                (Adult_Forest_Temple and is_adult) or
+                (Child_Forest_Temple and is_child)",
+            "Fire Temple Lower": "
+                (Adult_Fire_Temple and is_adult) or
+                (Child_Fire_Temple and is_child)",
+            "Water Temple Lobby": "
+                (Adult_Water_Temple and is_adult) or
+                (Child_Water_Temple and is_child)",
+            "Shadow Temple Entryway": "
+                (Adult_Shadow_Temple and is_adult) or
+                (Child_Shadow_Temple and is_child)",
+            "Spirit Temple Lobby": "
+                (Adult_Spirit_Temple and is_adult) or
+                (Child_Spirit_Temple and is_child)",
+            "Ice Cavern Beginning": "
+                (Adult_Ice_Cavern and is_adult) or
+                (Child_Ice_Cavern and is_child)",
+            "Gerudo Training Grounds Lobby": "
+                (Adult_Gerudo_Training_Grounds and is_adult) or
+                (Child_Gerudo_Training_Grounds and is_child)",
+            "Bottom of the Well": "
+                (Adult_Bottom_of_the_Well and is_adult) or
+                (Child_Bottom_of_the_Well and is_child)"
         }
     },
     {
@@ -158,11 +198,12 @@
             "GS Sacred Forest Meadow": "can_use(Hookshot) and nighttime",
             "Sacred Forest Meadow Maze Gossip Stone (Lower)": "True",
             "Sacred Forest Meadow Maze Gossip Stone (Upper)": "True",
-            "Sacred Forest Meadow Saria Gossip Stone": "True"
+            "Sacred Forest Meadow Saria Gossip Stone": "True",
+            "Adult Forest Temple": "can_use(Hookshot)",
+            "Child Forest Temple": "False"
         },
         "exits": {
             "Sacred Forest Meadow Entryway": "True",
-            "Forest Temple Lobby": "can_use(Hookshot)",
             "Meadow Fairy Grotto": "True",
             "Meadow Storms Grotto": "can_play(Song_of_Storms) and can_stun_deku"
         }
@@ -221,7 +262,13 @@
             "GS Lake Hylia Giant Tree": "can_use(Longshot)",
             "Lake Hylia Lab Gossip Stone": "True",
             "Lake Hylia Gossip Stone (Southeast)": "True",
-            "Lake Hylia Gossip Stone (Southwest)": "True"
+            "Lake Hylia Gossip Stone (Southwest)": "True",
+            "Adult Water Temple": "
+                (Iron_Boots or
+                 (logic_morpha_with_scale and (Progressive_Scale, 2) and
+                  not shuffle_dungeon_entrances)) and
+                can_use(Hookshot) and (logic_fewer_tunic_requirements or can_use(Zora_Tunic))",
+            "Child Water Temple": "False"
         },
         "exits": {
             "Hyrule Field": "True",
@@ -229,9 +276,6 @@
             "Lake Hylia Lab": "True",
             "Fishing Hole": "
                 is_child or can_use(Scarecrow) or can_use(Magic_Bean) or can_reach(Morpha, Location)",
-            "Water Temple Lobby": "
-                (Iron_Boots or (logic_morpha_with_scale and (Progressive_Scale, 2))) and 
-                can_use(Hookshot) and (logic_fewer_tunic_requirements or can_use(Zora_Tunic))",
             "Lake Hylia Grotto": "can_stun_deku"
         }
     },
@@ -300,13 +344,14 @@
                 can_use(Hookshot) and Carpenter_Rescue and nighttime",
             "GS Gerudo Fortress Top Floor": "
                 nighttime and (Carpenter_Rescue or can_use(Bow) or can_use(Hookshot) or 
-                    can_use(Hover_Boots) or logic_gerudo_kitchen)"
+                    can_use(Hover_Boots) or logic_gerudo_kitchen)",
+            "Adult Gerudo Training Grounds": "
+                Carpenter_Rescue and Gerudo_Membership_Card and is_adult",
+            "Child Gerudo Training Grounds": "False"
         },
         "exits": {
             "Haunted Wasteland": "
-                Carpenter_Rescue and (logic_wasteland_crossing or can_use(Hover_Boots) or can_use(Longshot))",
-            "Gerudo Training Grounds Lobby": "
-                Carpenter_Rescue and Gerudo_Membership_Card and is_adult"
+                Carpenter_Rescue and (logic_wasteland_crossing or can_use(Hover_Boots) or can_use(Longshot))"
         }
     },
     {
@@ -324,7 +369,8 @@
         "region_name": "Desert Colossus",
         "locations": {
             "Colossus Freestanding PoH": "can_use(Magic_Bean)",
-            "Sheik at Colossus": "True",
+            "Adult Spirit Temple": "is_adult",
+            "Child Spirit Temple": "is_child",
             "GS Desert Colossus Bean Patch": "can_plant_bugs and can_child_attack",
             "GS Desert Colossus Tree": "can_use(Hookshot) and nighttime",
             "GS Desert Colossus Hill": "
@@ -334,7 +380,6 @@
         },
         "exits": {
             "Colossus Fairy": "has_explosives",
-            "Spirit Temple Lobby": "True",
             "Desert Colossus Grotto": "can_use(Silver_Gauntlets)"
         }
     },
@@ -551,7 +596,9 @@
                 is_child and (has_slingshot or has_bombchus or 
                     (logic_kakariko_tower_gs and (has_sticks or Kokiri_Sword) and
                     (damage_multiplier != 'ohko' or has_bottle or can_use(Nayrus_Love)))) and nighttime",
-            "GS Kakariko Above Impa's House": "can_use(Hookshot) and nighttime"
+            "GS Kakariko Above Impa's House": "can_use(Hookshot) and nighttime",
+            "Child Bottom of the Well": "is_child and can_play(Song_of_Storms)",
+            "Adult Bottom of the Well": "is_adult and shuffle_dungeon_entrances"
         },
         "exits": {
             "Hyrule Field": "True",
@@ -562,7 +609,6 @@
             "Windmill": "True",
             "Kakariko Bazaar": "is_adult",
             "Kakariko Shooting Gallery": "True",
-            "Bottom of the Well": "is_child and can_play(Song_of_Storms)",
             "Kakariko Potion Shop Front": "is_adult",
             "Kakariko Potion Shop Back": "is_adult",
             "Odd Medicine Building": "True",
@@ -703,11 +749,12 @@
     {
         "region_name": "Shadow Temple Warp Region",
         "locations": {
-            "Graveyard Gossip Stone": "True"
+            "Graveyard Gossip Stone": "True",
+            "Adult Shadow Temple": "is_adult and can_use(Dins_Fire)",
+            "Child Shadow Temple": "is_child and can_use(Dins_Fire)"
         },
         "exits": {
-            "Graveyard": "True",
-            "Shadow Temple Entryway": "can_use(Dins_Fire)"
+            "Graveyard": "True"
         }
     },
     {
@@ -723,24 +770,17 @@
                 can_plant_bugs and (has_explosives or Progressive_Strength_Upgrade)",
             "GS Mountain Trail Bomb Alcove": "can_blast_or_smash",
             "GS Mountain Trail Path to Crater": "can_use(Hammer) and nighttime",
-            "GS Mountain Trail Above Dodongo's Cavern": "can_use(Hammer) and nighttime"
+            "GS Mountain Trail Above Dodongo's Cavern": "can_use(Hammer) and nighttime",
+            "Child Dodongos Cavern": "is_child and (has_explosives or Progressive_Strength_Upgrade)",
+            "Adult Dodongos Cavern": "is_adult"
         },
         "exits": {
             "Kakariko Village": "True",
             "Goron City": "True",
             "Death Mountain Crater Upper": "as_either_here(can_blast_or_smash)",
             "Mountain Summit Fairy": "can_blast_or_smash",
-            "Dodongos Cavern Entryway": "
-                has_explosives or Progressive_Strength_Upgrade or is_adult",
             "Mountain Bombable Grotto": "can_blast_or_smash",
             "Mountain Storms Grotto": "can_play(Song_of_Storms)"
-        }
-    },
-    {
-        "region_name": "Dodongos Cavern Entryway",
-        "exits": {
-            "Dodongos Cavern Beginning": "True",
-            "Death Mountain": "True"
         }
     },
     {
@@ -864,13 +904,20 @@
                 can_use(Magic_Bean) or 
                 (logic_crater_bean_poh_with_hovers and can_use(Hover_Boots))",
             "Sheik in Crater": "is_adult",
-            "GS Mountain Crater Bean Patch": "can_plant_bugs and can_child_attack"
+            "GS Mountain Crater Bean Patch": "can_plant_bugs and can_child_attack",
+            # This logic sucks, but I really want child Fire Temple in ER for with no tunic
+            # as its a super easy dash coming from the bolero warp. Make it consistent with
+            # adult with child by removing tunic if adule has bolero, but only on shuffled
+            # entrances
+            "Adult Fire Temple": "
+                is_adult and (logic_fewer_tunic_requirements or can_use(Goron_Tunic) or 
+                              (shuffle_dungeon_entrances and can_play(Bolero_of_Fire)))",
+            "Child Fire Temple": "
+                is_child and can_play(Bolero_of_Fire) and shuffle_dungeon_entrances"
         },
         "exits": {
             "Death Mountain Crater Lower": "
-                can_use(Hover_Boots) or can_use(Hookshot) or can_use(Magic_Bean)",
-            "Fire Temple Lower": "
-                is_adult and (logic_fewer_tunic_requirements or can_use(Goron_Tunic))"
+                can_use(Hover_Boots) or can_use(Hookshot) or can_use(Magic_Bean)"
         }
     },
     {
@@ -960,12 +1007,14 @@
                 can_use(Silver_Gauntlets) and can_blast_or_smash and 
                 can_use(Hookshot) and nighttime",
             "Zoras Fountain Fairy Gossip Stone": "True",
-            "Zoras Fountain Jabu Gossip Stone": "True"
+            "Zoras Fountain Jabu Gossip Stone": "True",
+            "Child Jabu Jabus Belly": "is_child and has_bottle",
+            "Adult Jabu Jabus Belly": "False",
+            "Child Ice Cavern": "False",
+            "Adult Ice Cavern": "is_adult"
         },
         "exits": {
             "Zoras Domain": "True",
-            "Jabu Jabus Belly Beginning": "is_child and has_bottle",
-            "Ice Cavern": "is_adult",
             "Zoras Fountain Fairy": "has_explosives"
         }
     },
