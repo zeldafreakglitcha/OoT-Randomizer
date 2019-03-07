@@ -28,6 +28,7 @@ from version import __version__
 from N64Patch import create_patch_file, apply_patch_file
 from SettingsList import setting_infos, logic_tricks
 from Rules import set_rules
+from Plandomizer import Distribution
 
 
 class dummy_window():
@@ -51,6 +52,8 @@ def main(settings, window=dummy_window()):
     for trick in logic_tricks.values():
         settings.__dict__[trick['name']] = trick['name'] in settings.allowed_tricks
 
+    settings.load_distribution()
+
     if settings.shuffle_dungeon_entrances and \
         (settings.mq_dungeons_random or settings.mq_dungeons != 0):
         raise Exception('Shuffle Dungeon Entrances incompatible with Master Quest dungeons')
@@ -73,27 +76,31 @@ def main(settings, window=dummy_window()):
         else:
             settings.player_num = 1
 
-    settings.remove_disabled()
-
     logger.info('OoT Randomizer Version %s  -  Seed: %s\n\n', __version__, settings.seed)
+    settings.remove_disabled()
     random.seed(settings.numeric_seed)
+    settings.resolve_random_settings()
+
     for i in range(0, settings.world_count):
         worlds.append(World(settings))
 
     window.update_status('Creating the Worlds')
     for id, world in enumerate(worlds):
         world.id = id
+        world.distribution = settings.distribution.world_dists[id]
         logger.info('Generating World %d.' % id)
 
         window.update_progress(0 + 1*(id + 1)/settings.world_count)
         logger.info('Creating Overworld')
 
         # Determine MQ Dungeons
-        td_count = len(world.dungeon_mq)
+        dungeon_pool = list(world.dungeon_mq)
+        dist_num_mq = world.distribution.configure_dungeons(world, dungeon_pool)
+
         if world.mq_dungeons_random:
-            world.mq_dungeons = random.randint(0, td_count)
+            world.mq_dungeons = dist_num_mq + random.randint(0, len(dungeon_pool))
         mqd_count = world.mq_dungeons
-        mqd_picks = random.sample(list(world.dungeon_mq), mqd_count)
+        mqd_picks = random.sample(dungeon_pool, mqd_count - dist_num_mq)
         for dung in mqd_picks:
             world.dungeon_mq[dung] = True
 
@@ -165,7 +172,7 @@ def main(settings, window=dummy_window()):
 
             random.setstate(rng_state)
             patch_rom(spoiler, world, rom)
-            patch_cosmetics(settings, rom)
+            cosmetics_log = patch_cosmetics(settings, rom)
             window.update_progress(65 + 20*(world.id + 1)/settings.world_count)
 
             window.update_status('Creating Patch File')
@@ -175,13 +182,23 @@ def main(settings, window=dummy_window()):
             rom.restore()
             window.update_progress(65 + 30*(world.id + 1)/settings.world_count)
 
+            if settings.create_cosmetics_log and cosmetics_log:
+                window.update_status('Creating Cosmetics Log')
+                if settings.world_count > 1:
+                    cosmetics_log_filename = "%sP%d_Cosmetics.txt" % (outfilebase, world.id + 1)
+                else:
+                    cosmetics_log_filename = '%s_Cosmetics.txt' % outfilebase
+                cosmetics_log.to_file(os.path.join(output_dir, cosmetics_log_filename))
+                file_list.append(cosmetics_log_filename)
+            cosmetics_log = None
+
         if settings.world_count > 1:
             window.update_status('Creating Patch Archive')
             output_path = os.path.join(output_dir, '%s.zpfz' % outfilebase)
             with zipfile.ZipFile(output_path, mode="w") as patch_archive:
-                for index, file in enumerate(file_list):
+                for file in file_list:
                     file_path = os.path.join(output_dir, file)
-                    patch_archive.write(file_path, 'P%d.zpf' % (index + 1), compress_type=zipfile.ZIP_DEFLATED)
+                    patch_archive.write(file_path, file.replace(outfilebase, ''), compress_type=zipfile.ZIP_DEFLATED)
             for file in file_list:
                 os.remove(os.path.join(output_dir, file))
         logger.info("Created patchfile at: %s" % output_path)
@@ -235,16 +252,20 @@ def main(settings, window=dummy_window()):
         window.update_progress(95)
 
     for world in worlds:
-        for setting in world.settings.__dict__:
-            world.settings.__dict__[setting] = world.__dict__[setting]
+        for info in setting_infos:
+            world.settings.__dict__[info.name] = world.__dict__[info.name]
 
+    settings.distribution.update_spoiler(spoiler)
     if settings.create_spoiler:
         window.update_status('Creating Spoiler Log')
-        spoiler.to_file(os.path.join(output_dir, '%s_Spoiler.txt' % outfilebase))
+        spoiler_path = os.path.join(output_dir, '%s_Spoiler.json' % outfilebase)
+        settings.distribution.to_file(spoiler_path)
+        logger.info("Created spoiler log at: %s" % ('%s_Spoiler.json' % outfilebase))
     else:
         window.update_status('Creating Settings Log')
-        spoiler.to_file(os.path.join(output_dir, '%s_Settings.txt' % outfilebase))
-    logger.info("Created spoiler log at: %s" % ('%s_Settings.txt' % outfilebase))
+        settings_path = os.path.join(output_dir, '%s_Settings.json' % outfilebase)
+        settings.distribution.to_file(settings_path)
+        logger.info("Created settings log at: %s" % ('%s_Settings.json' % outfilebase))
 
     if settings.create_cosmetics_log and cosmetics_log:
         window.update_status('Creating Cosmetics Log')
@@ -299,7 +320,9 @@ def from_patch_file(settings, window=dummy_window()):
         if not settings.output_file:
             output_path += 'P%d' % (settings.player_num)
     apply_patch_file(rom, settings.patch_file, subfile)
-    cosmetics_log = patch_cosmetics(settings, rom)
+    cosmetics_log = None
+    if settings.repatch_cosmetics:
+        cosmetics_log = patch_cosmetics(settings, rom)
     window.update_progress(65)
 
     window.update_status('Saving Uncompressed ROM')
@@ -391,8 +414,8 @@ def cosmetic_patch(settings, window=dummy_window()):
     apply_patch_file(rom, settings.patch_file, subfile)
     window.update_progress(65)
 
-    rom.update_crc()
-    rom.original = copy.copy(rom.buffer)
+    # clear changes from the base patch file
+    patched_base_rom = copy.copy(rom.buffer)
     rom.changed_address = {}
     rom.changed_dma = {}
     rom.force_patch = []
@@ -403,6 +426,11 @@ def cosmetic_patch(settings, window=dummy_window()):
     window.update_progress(80)
 
     window.update_status('Creating Patch File')
+
+    # base the new patch file on the base patch file
+    rom.original = patched_base_rom
+
+    rom.update_crc()
     create_patch_file(rom, patchfilename)
     logger.info("Created patchfile at: %s" % patchfilename)
     window.update_progress(95)

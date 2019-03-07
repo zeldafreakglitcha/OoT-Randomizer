@@ -1,7 +1,7 @@
 from State import State
 from Region import Region
 from Entrance import Entrance
-from Location import Location, LocationFactory
+from Location import Location, LocationFactory, DisableType
 from LocationList import business_scrubs
 from DungeonList import create_dungeons
 from Rules import set_rules, set_shop_rules
@@ -36,14 +36,17 @@ class World(object):
         # this gives the world an attribute for every setting listed in Settings.py
         self.settings = settings
         self.__dict__.update(settings.__dict__)
+        self.distribution = None
 
         # evaluate settings (important for logic, nice for spoiler)
         if self.big_poe_count_random:
             self.big_poe_count = random.randint(1, 10)
         if self.starting_tod == 'random':
             setting_info = get_setting_info('starting_tod')
-            choices = [ch for ch in setting_info.args_params['choices'] if ch not in ['default', 'random']]
+            choices = [ch for ch in setting_info.choices if ch not in ['default', 'random']]
             self.starting_tod = random.choice(choices)
+        if self.starting_age == 'random':
+            self.starting_age = random.choice(['child', 'adult'])
 
         # rename a few attributes...
         self.keysanity = self.shuffle_smallkeys != 'dungeon'
@@ -83,9 +86,11 @@ class World(object):
         new_world.skipped_trials = copy.copy(self.skipped_trials)
         new_world.dungeon_mq = copy.copy(self.dungeon_mq)
         new_world.big_poe_count = copy.copy(self.big_poe_count)
+        new_world.starting_age = self.starting_age
         new_world.can_take_damage = self.can_take_damage
         new_world.shop_prices = copy.copy(self.shop_prices)
         new_world.id = self.id
+        new_world.distribution = self.distribution
 
         new_world.regions = [region.copy(new_world) for region in self.regions]
         for region in new_world.regions:
@@ -108,9 +113,9 @@ class World(object):
         try:
             region_json = json.loads(json_string)
         except json.JSONDecodeError as error:
-            print("JSON parse error around text:\n" + json_string[error.pos-35:error.pos+35])
-            print("                                   ^^\n")
-            raise error
+            raise Exception("JSON parse error around text:\n" + \
+                            json_string[error.pos-35:error.pos+35] + "\n" + \
+                            "                                   ^^\n")
 
         for region in region_json:
             new_region = Region(region['region_name'])
@@ -281,12 +286,12 @@ class World(object):
         return [location for location in self.get_locations() if location.item is not None and location.item.name == item]
 
 
-    def push_item(self, location, item):
+    def push_item(self, location, item, promote_disabled=False, manual=False):
         if not isinstance(location, Location):
             location = self.get_location(location)
 
         # This check should never be false normally, but is here as a sanity check
-        if location.can_fill_fast(item):
+        if location.can_fill_fast(item, manual):
             location.item = item
             item.location = location
             item.price = location.price if location.price is not None else item.price
@@ -295,6 +300,34 @@ class World(object):
             logging.getLogger('').debug('Placed %s [World %d] at %s [World %d]', item, item.world.id if hasattr(item, 'world') else -1, location, location.world.id if hasattr(location, 'world') else -1)
         else:
             raise RuntimeError('Cannot assign item %s to location %s.' % (item, location))
+
+        if promote_disabled and location.disabled == DisableType.PENDING:
+            location.disabled = DisableType.DISABLED
+
+        # I confess that tail recursion on a linked list is not pythonic, but I
+        # really want to avoid listifying the vast majority of items given that
+        # fill is so performance sensitive.
+        if location.next is not None:
+            self.push_item(location.next, item.next, promote_disabled)
+
+    def pop_item(self, location, demote_disabled=False):
+        if not isinstance(location, Location):
+            location = self.get_location(location)
+
+        item = location.item
+
+        if item is not None:
+            item.location = None
+            item.price = item.special.get('Price')
+
+        location.item = None
+        location.price = None
+
+        if demote_disabled and location.disabled == DisableType.DISABLED:
+            location.disabled = DisableType.Pending
+
+        if location.next is not None:
+            self.pop_item(location.next, demote_disabled)
 
 
     def get_locations(self):
@@ -339,6 +372,7 @@ class World(object):
 
     def has_beaten_game(self, state):
         return state.has('Triforce')
+
 
     # Useless areas are areas that have contain no items that could ever
     # be used to complete the seed. Unfortunately this is very difficult
@@ -413,38 +447,76 @@ class World(object):
         for world in spoiler.worlds:
             duplicate_item_woth[world.id] = {}
         for location in woth_loc:
-            if not location.item.special.get('progressive', False):
-                # Progressive items may need multiple copies to make progression
-                # so we can't make this culling for those kinds of items.
-                duplicate_item_woth[location.item.world.id][location.item.name] = location
-            if 'Bottle' in location.item.name and \
-                location.item.name not in ['Bottle with Letter', 'Bottle with Big Poe']:
-                    # Bottles can have many names but they are all generally the same in logic
-                    # The problem is that Ruto's Letter and Big Poe might not be usuable as a 
-                    # Bottle immediately, so they might need to use a regular bottle in
-                    # addition to that one. Conversely finding a bottle might mean you still
-                    # need ruto's letter or big poe. So to work with this, we ignore those
-                    # two special bottles as being bottles
-                    duplicate_item_woth[location.item.world.id]['Bottle'] = location
+            world_id = location.item.world.id
+            item = location.item
+
+            if item.name == 'Bottle with Letter' and item.name in duplicate_item_woth[world_id]:
+                # Only the first Letter counts as a letter, subsequent ones are Bottles.
+                # It doesn't matter which one is considered bottle/letter, since they will
+                # both we considered not useless.
+                item_name = 'Bottle'
+            elif item.special.get('bottle', False):
+                # Bottles can have many names but they are all generally the same in logic.
+                # The letter and big poe bottles will give a bottle item, so no additional
+                # checks are required for them.
+                item_name = 'Bottle'
+            else:
+                item_name = item.name
+
+            if item_name not in duplicate_item_woth[world_id]:
+                duplicate_item_woth[world_id][item_name] = []
+            duplicate_item_woth[world_id][item_name].append(location)
 
         # generate the empty area list
         self.empty_areas = {}
+
         for area,area_info in areas.items():
             useless_area = True
             for location in area_info['locations']:
-                if location.item.majoritem:
-                    if (location.item.name in exclude_item_list):
-                        continue
+                world_id = location.item.world.id
+                item = location.item
 
-                    if 'Bottle' in location.item.name and location.item.name not in ['Bottle with Letter', 'Bottle with Big Poe']:
-                        dupe_location = duplicate_item_woth[location.item.world.id].get('Bottle', location)
-                    else:
-                        dupe_location = duplicate_item_woth[location.item.world.id].get(location.item.name, location)
+                if (not location.item.majoritem) or (location.item.name in exclude_item_list):
+                    # Minor items are always useless in logic
+                    continue
 
-                    if (dupe_location.world.id != location.world.id or dupe_location.name != location.name):
-                        continue
+                is_bottle = False
+                if item.name == 'Bottle with Letter' and item.name in duplicate_item_woth[world_id]:
+                    # If this is the required Letter then it is not useless
+                    dupe_locations = duplicate_item_woth[world_id][item.name]
+                    for dupe_location in dupe_locations:
+                        if dupe_location.world.id == location.world.id and dupe_location.name == location.name:
+                            useless_area = False
+                            break
+                    # Otherwise it is treated as a bottle
+                    is_bottle = True
 
+                if is_bottle or item.special.get('bottle', False):
+                    # Bottle Items are all interchangable. Logic currently only needs
+                    # a max on 1 bottle, but this might need to be changed in the
+                    # future if using multiple bottles for fire temple diving is added
+                    # to logic
+                    dupe_locations = duplicate_item_woth[world_id].get('Bottle', [])
+                    max_progressive = 1
+                elif item.name == 'Bottle with Big Poe':
+                    # The max number of requred Big Poe Bottles is based on the setting
+                    dupe_locations = duplicate_item_woth[world_id].get(item.name, [])
+                    max_progressive = self.settings.big_poe_count
+                else:
+                    dupe_locations = duplicate_item_woth[world_id].get(item.name, [])
+                    max_progressive = item.special.get('Progressive', 1)
+
+                # If this is a required item location, then it is not useless
+                for dupe_location in dupe_locations:
+                    if dupe_location.world.id == location.world.id and dupe_location.name == location.name:
+                        useless_area = False
+                        break
+
+                # If there are sufficient required item known, then the remaining
+                # copies of the items are useless.
+                if max_progressive is True or len(dupe_locations) < max_progressive:
                     useless_area = False
                     break
+
             if useless_area:
                 self.empty_areas[area] = area_info

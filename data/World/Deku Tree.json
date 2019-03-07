@@ -6,27 +6,25 @@
             "Deku Tree Lobby Chest": "True",
             "Deku Tree Compass Chest": "True",
             "Deku Tree Compass Room Side Chest": "True",
-            "Deku Tree Basement Chest": "Adult_Deku_Tree or can_child_attack or has_nuts",
-            "GS Deku Tree Compass Room": "Adult_Deku_Tree or can_child_attack",
+            "Deku Tree Basement Chest": "is_adult or can_child_attack or has_nuts",
+            "GS Deku Tree Compass Room": "is_adult or can_child_attack",
             "GS Deku Tree Basement Vines": "
-                has_projectile(Adult_Deku_Tree, Child_Deku_Tree) or 
-                (logic_deku_basement_gs and (Adult_Deku_Tree or has_sticks or Kokiri_Sword))",
-            "GS Deku Tree Basement Gate": "Adult_Deku_Tree or can_child_attack",
+                can_use_projectile or can_use(Dins_Fire) or
+                (logic_deku_basement_gs and (is_adult or has_sticks or Kokiri_Sword))",
+            "GS Deku Tree Basement Gate": "is_adult or can_child_attack",
             "GS Deku Tree Basement Back Room": "
-                (has_fire_source_with_torch(Adult_Deku_Tree, Child_Deku_Tree) and
-                 ((can_use(Slingshot) and Child_Deku_Tree) or
-                  (can_use(Bow) and Adult_Deku_Tree)) and
-                 can_blast_or_smash(Adult_Deku_Tree) and
-                 ((can_use(Hookshot) and Adult_Deku_Tree) or
-                  (can_use(Boomerang) and Child_Deku_Tree))) or
-                (Adult_Deku_Tree and Child_Deku_Tree and has_explosives and
+                (as_either_here(has_fire_source_with_torch()) and
+                 as_either_here(can_use(Slingshot) or can_use(Bow)) and
+                 as_either_here(can_blast_or_smash) and
+                 as_either_here(can_use(Hookshot) or can_use(Boomerang))) or
+                (as_adult_here(True) and is_child and has_explosives and
                  can_use(Boomerang) and (has_sticks or can_use(Dins_Fire)))"
         },
         "exits": {
-            "Deku Tree Slingshot Room": "has_shield(Adult_Deku_Tree, Child_Deku_Tree)",
+            "Deku Tree Slingshot Room": "as_either_here(has_shield)",
             "Deku Tree Boss Room": "
-                has_fire_source_with_torch(Adult_Deku_Tree, Child_Deku_Tree) and
-                (Adult_Deku_Tree or can_use(Slingshot))"
+                as_either_here(has_fire_source_with_torch()) and
+                as_either_here(is_adult or can_use(Slingshot))"
         }
     },
     {
@@ -45,11 +43,12 @@
         "dungeon": "Deku Tree",
         "locations": {
             "Queen Gohma Heart": "
-                has_shield(Adult_Deku_Tree, Child_Deku_Tree) and 
-                (Adult_Deku_Tree or Kokiri_Sword or has_sticks)",
+                as_either_here(has_shield) and (is_adult or Kokiri_Sword or has_sticks)",
             "Queen Gohma": "
-                has_shield(Adult_Deku_Tree, Child_Deku_Tree) and 
-                (Adult_Deku_Tree or Kokiri_Sword or has_sticks)"
+                as_either_here(has_shield) and (is_adult or Kokiri_Sword or has_sticks)"
+        },
+        "exits": {
+            "Deku Tree Lobby": "True"
         }
     }
 ]

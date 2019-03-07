@@ -3,8 +3,13 @@ import logging
 from State import State
 from Rules import set_shop_rules
 from Location import DisableType
-from ItemPool import entrancelist
-from Utils import traverse
+from ItemPool import junk_pool, item_groups
+from LocationList import location_groups
+from ItemPool import songlist, get_junk_item, junk_pool, item_groups, entrancelist
+from ItemList import item_table
+from Item import ItemFactory
+from functools import reduce
+
 
 class FillError(RuntimeError):
     pass
@@ -17,7 +22,14 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
         'Song from Ocarina of Time', 'Song at Windmill', 'Sheik Forest Song', 'Sheik at Temple',
         'Sheik in Crater', 'Sheik in Ice Cavern', 'Sheik in Kakariko', 'Sheik at Colossus']]
 
-    entrance_locations = [[ world.get_location(age + ' ' + entrance) for age in ['Child', 'Adult']] for world in worlds for entrance in entrancelist ]
+    entrance_locations = []
+    for world in worlds:
+        for entrance in entrancelist:
+            if entrance == 'Deku Tree' and not worlds[0].open_forest:
+                continue
+            child_location = world.get_location('Child ' + entrance)
+            child_location.next = world.get_location('Adult ' + entrance)
+            entrance_locations.append(child_location)
 
     shop_locations = [location for world in worlds for location in world.get_unfilled_locations() if location.type == 'Shop' and location.price == None]
 
@@ -28,7 +40,6 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
                location not in shop_locations and \
                location.type != 'Entrance' and \
                location.type != 'GossipStone']
-
     world_states = [world.state for world in worlds]
 
     window.locationcount = len(fill_locations) + len(song_locations) + len(shop_locations) + len(entrance_locations)
@@ -37,24 +48,38 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
     # Generate the itempools
     shopitempool = [item for world in worlds for item in world.itempool if item.type == 'Shop']
     songitempool = [item for world in worlds for item in world.itempool if item.type == 'Song']
+    itempool =     [item for world in worlds for item in world.itempool if item.type != 'Shop' and item.type != 'Song' and item.type != 'Entrance']
+
     if worlds[0].shuffle_dungeon_entrances:
         entrancemap = { world.id : { item.name : item for item in world.itempool if item.type == 'Entrance' } for world in worlds }
-        entrancepool = [[entrancemap[world.id][age + ' ' + entrance] for age in ['Child', 'Adult']] for world in worlds for entrance in entrancelist ]
+        entrancepool = []
+        for world in worlds:
+            for entrance in entrancelist:
+                if entrance == 'Deku Tree' and not worlds[0].open_forest:
+                    continue
+                child_item = entrancemap[world.id]['Child ' + entrance]
+                child_item.next = entrancemap[world.id]['Adult ' + entrance]
+                entrancepool.append(child_item)
 
-        #If ALR is off, we need to declare at least one age or the other for Deku/DC as progression
-        #for state collection purposes. Rando it. We cannot do this for ALR, as ALR placement is too
-        #heavily restricted to be able to handle any extra restrictions. This can be fixed by not
-        #overloading is_advancement with these ER special case semantics.
+        # If ALR is off, we need to declare at least one age or the other for Deku/DC as progression
+        # for state collection purposes. Rando it. We cannot do this for ALR, as ALR placement is too
+        # heavily restricted to be able to handle any extra restrictions. ALR does not need the state
+        # collection, as ALR already protects itself for single placements out of reach. This can all be
+        # fixed by not overloading is_advancement with these ER special case semantics.
         if worlds[0].check_beatable_only:
             for world in worlds:
-                for entrance in [ 'Deku Tree', 'Dodongos Cavern' ]:
+                either_age_dungeons = [ 'Dodongos Cavern' ];
+                if  worlds[0].open_forest:
+                    either_age_dungeons.append('Deku Tree')
+                for entrance in either_age_dungeons:
                     entrancemap[world.id][random.choice(['Child', 'Adult']) + ' ' + entrance].advancement = True
 
-    itempool =     [item for world in worlds for item in world.itempool if item.type != 'Shop' and item.type != 'Song' and item.type != 'Entrance']
     
     if worlds[0].shuffle_song_items:
         itempool.extend(songitempool)
         fill_locations.extend(song_locations)
+        songitempool = []
+        song_locations = []
 
     # add unrestricted dungeon items to main item pool
     itempool.extend([item for world in worlds for item in world.get_unrestricted_dungeon_items()])
@@ -68,12 +93,20 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
     # set ice traps to have the appearance of other random items in the item pool
     ice_traps = [item for item in itempool if item.name == 'Ice Trap']
     fake_items = []
+    major_items = [item for item in itempool if item.majoritem]
+    if len(major_items) == 0: # All major items were somehow removed from the pool (can happen in plando)
+        major_items = ItemFactory([item for (item, data) in item_table.items() if data[0] == 'Item' and data[1] and data[2] is not None])
     while len(ice_traps) > len(fake_items):
         # if there are more ice traps than major items, then double up on major items
-        fake_items.extend([item for item in itempool if item.majoritem])
+        fake_items.extend(major_items)
     for random_item in random.sample(fake_items, len(ice_traps)):
         ice_trap = ice_traps.pop(0)
         ice_trap.looks_like_item = random_item
+
+    cloakable_locations = shop_locations + song_locations + fill_locations
+    all_models = shopitempool + dungeon_items + songitempool + itempool
+    worlds[0].distribution.fill(window, worlds, [shop_locations, song_locations, fill_locations], [shopitempool, dungeon_items, songitempool, progitempool, prioitempool, restitempool])
+    itempool = progitempool + prioitempool + restitempool
 
     #We place entrances first. Like songs and shops, the placement is heavily
     #limited with the extra complication that Deku Tree and DC are placed without
@@ -83,8 +116,9 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
         fill_ownworld_restrictive(window, worlds, entrance_locations, entrancepool, \
                                   itempool + songitempool + shopitempool + dungeon_items, "entrance")
         #Now put every entrance access fully into logic
-        for entrance in traverse(entrancepool):
+        for entrance in entrancepool:
             entrance.advancement = True
+            entrance.next.advancement = True
 
     # We place all the shop items next. Like songs, they have a more limited
     # set of locations that they can be placed in, so placing them first will
@@ -93,7 +127,6 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
     # or not. This shouldn't have much affect on item bias.
     if shop_locations:
         fill_ownworld_restrictive(window, worlds, shop_locations, shopitempool, itempool + songitempool + dungeon_items, "shop")
-
     # Update the shop item access rules
     for world in worlds:
         set_shop_rules(world)
@@ -104,7 +137,7 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
     # placement, but will leave as is for now
     fill_dungeons_restrictive(window, worlds, fill_locations, dungeon_items, itempool + songitempool)
 
-    # places the songs and entrances into the world
+    # places the songs into the world
     # Currently places songs only at song locations. if there's an option
     # to allow at other locations then they should be in the main pool.
     # Placing songs on their own since they have a relatively high chance
@@ -150,6 +183,8 @@ def distribute_items_restrictive(window, worlds, fill_locations=None):
 
     if not State.can_beat_game(world_states, True):
         raise FillError('Cannot beat game!')
+
+    worlds[0].settings.distribution.cloak(worlds, [cloakable_locations], [all_models])
 
     # Get Light Arrow location for later usage.
     for world in worlds:
@@ -208,6 +243,9 @@ def fill_dungeon_unique_item(window, worlds, fill_locations, itempool):
     # iterate of all the dungeons in a random order, placing the item there
     for dungeon in dungeons:
         dungeon_locations = [location for region in dungeon.regions for location in region.locations if location in fill_locations]
+        if dungeon.name == 'Spirit Temple':
+            # spirit temple is weird and includes a couple locations outside of the dungeon
+            dungeon_locations.extend(filter(lambda location: location in fill_locations, [dungeon.world.get_location(location) for location in ['Mirror Shield Chest', 'Silver Gauntlets Chest']]))
 
         # cache this list to flag afterwards
         all_dungeon_locations.extend(dungeon_locations)
@@ -229,29 +267,25 @@ def fill_dungeon_unique_item(window, worlds, fill_locations, itempool):
 
     logging.getLogger('').info("Unique dungeon items placed")
 
-def list_first(l):
-    if isinstance(l, list):
-        return list_first(l[0])
-    return l
 
 # Places items restricting placement to the recipient player's own world
 def fill_ownworld_restrictive(window, worlds, locations, ownpool, itempool, description="Unknown", attempts=15):
     # get the locations for each world
 
     # look for preplaced items
-    placed_prizes = [list_first(loc).item.name for loc in locations if list_first(loc).item is not None]
-    unplaced_prizes = [item for item in ownpool if list_first(item).name not in placed_prizes]
-    empty_locations = [loc for loc in locations if list_first(loc).item is None]
+    placed_prizes = [loc.item.name for loc in locations if loc.item is not None]
+    unplaced_prizes = [item for item in ownpool if item.name not in placed_prizes]
+    empty_locations = [loc for loc in locations if loc.item is None]
 
-    prizepool_dict = {world.id: [item for item in unplaced_prizes if list_first(item).world.id == world.id] for world in worlds}
-    prize_locs_dict = {world.id: [loc for loc in empty_locations if list_first(loc).world.id == world.id] for world in worlds}
+    prizepool_dict = {world.id: [item for item in unplaced_prizes if item.world.id == world.id] for world in worlds}
+    prize_locs_dict = {world.id: [loc for loc in empty_locations if loc.world.id == world.id] for world in worlds}
 
     # Shop item being sent in to this method are tied to their own world.
     # Therefore, let's do this one world at a time. We do this to help
     # increase the chances of successfully placing songs
     for world in worlds:
         # List of states with all items
-        unplaced_prizes = [item for item in unplaced_prizes if list_first(item).world.id != world.id]
+        unplaced_prizes = [item for item in unplaced_prizes if item not in prizepool_dict[world.id]]
         all_state_base_list = State.get_states_with_items([world.state for world in worlds], itempool + unplaced_prizes)
 
         world_attempts = attempts
@@ -266,59 +300,15 @@ def fill_ownworld_restrictive(window, worlds, locations, ownpool, itempool, desc
                 logging.getLogger('').info("%s items placed for world %s", description, (world.id+1))
             except FillError as e:
                 logging.getLogger('').info("Failed to place %s items for world %s. Will retry %s more times", description, (world.id+1), world_attempts)
-                for location in traverse(prize_locs_dict[world.id]):
-                    location.item = None
-                    if location.disabled == DisableType.DISABLED:
-                        location.disabled = DisableType.PENDING
+                for location in prize_locs_dict[world.id]:
+                    world.pop_item(location, True)
                 logging.getLogger('').info('\t%s' % str(e))
                 continue
             break
         else:
             raise FillError('Unable to place %s items in world %d' % (description, (world.id+1)))
 
-def zip_strict(list1, list2):
-    if not isinstance(list1, list):
-        list1 = [list1]
-    if not isinstance(list2, list):
-        list2 = [list2]
-    if len(list1) == len(list2):
-        return list(zip(list1, list2))
-    return []
 
-def can_place_item_at_location(location, item_to_place, maximum_exploration_state_list, perform_access_check):
-    for (loc1, item1) in zip_strict(location, item_to_place):
-        if not loc1.can_fill(maximum_exploration_state_list[loc1.world.id], item1, perform_access_check):
-            return False;
-
-        # for multiworld, make it so that the location is also reachable
-        # in the world the item is for. This is to prevent early restrictions
-        # in one world being placed late in another world. If this is not
-        # done then one player may be waiting a long time for other players.
-        if loc1.world.id != item1.world.id:
-            try:
-                source_location = item1.world.get_location(loc1.name)
-                if not source_location.can_fill(maximum_exploration_state_list[item1.world.id], item1, perform_access_check):
-                    # location wasn't reachable in item's world, so skip it
-                    return False
-            except KeyError:
-                # This location doesn't exist in the other world, let's look elsewhere.
-                # Check access to whatever parent region exists in the other world.
-                can_reach = True
-                parent_region = loc1.parent_region
-                while parent_region:
-                    try:
-                        source_region = item1.world.get_region(parent_region.name)
-                        can_reach = source_region.can_reach(maximum_exploration_state_list[item1.world.id])
-                        break
-                    except KeyError:
-                        parent_region = parent_region.entrances[0].parent_region
-                if not can_reach:
-                    return False
-
-        if loc1.disabled == DisableType.PENDING:
-            if not State.can_beat_game(maximum_exploration_state_list):
-                return False
-    return True
 
 # Places items in the itempool into locations.
 # worlds is a list of worlds and is redundant of the worlds in the base_state_list
@@ -367,7 +357,42 @@ def fill_restrictive(window, worlds, base_state_list, locations, itempool, count
         # in the world we are placing it (possibly checking for reachability)
         spot_to_fill = None
         for location in locations:
-            if can_place_item_at_location(location, item_to_place, maximum_exploration_state_list, perform_access_check):
+            if location.can_fill(maximum_exploration_state_list[location.world.id], item_to_place, perform_access_check):
+                # for multiworld, make it so that the location is also reachable
+                # in the world the item is for. This is to prevent early restrictions
+                # in one world being placed late in another world. If this is not
+                # done then one player may be waiting a long time for other players.
+                # For entrance placements it will only look at the master (Child)
+                # entrances, however entrances are currently placed first in their
+                # own pass with no dependencies between placements so this is a nop.
+                # This check can be booted to Locations.can_fill() to resolve
+                # more generically and should be done if entrances are ever placed in
+                # later fill passes.
+                if location.world.id != item_to_place.world.id:
+                    try:
+                        source_location = item_to_place.world.get_location(location.name)
+                        if not source_location.can_fill(maximum_exploration_state_list[item_to_place.world.id], item_to_place, perform_access_check):
+                            # location wasn't reachable in item's world, so skip it
+                            continue
+                    except KeyError:
+                        # This location doesn't exist in the other world, let's look elsewhere.
+                        # Check access to whatever parent region exists in the other world.
+                        can_reach = True
+                        parent_region = location.parent_region
+                        while parent_region:
+                            try:
+                                source_region = item_to_place.world.get_region(parent_region.name)
+                                can_reach = maximum_exploration_state_list[item_to_place.world.id].can_reach(source_region)
+                                break
+                            except KeyError:
+                                parent_region = parent_region.entrances[0].parent_region
+                        if not can_reach:
+                            continue
+
+                if location.disabled == DisableType.PENDING:
+                    if not State.can_beat_game(maximum_exploration_state_list):
+                        continue
+
                 # location is reachable (and reachable in item's world), so place item here
                 spot_to_fill = location
                 break
@@ -381,13 +406,10 @@ def fill_restrictive(window, worlds, base_state_list, locations, itempool, count
                 continue
             else:
                 # we expect all items to be placed
-                raise FillError('Game unbeatable: No more spots to place %s [World %d]' % (item_to_place, list_first(item_to_place).world.id))
+                raise FillError('Game unbeatable: No more spots to place %s [World %d]' % (item_to_place, item_to_place.world.id))
 
         # Place the item in the world and continue
-        for (spot1, item1) in zip_strict(spot_to_fill, item_to_place):
-            if spot1.disabled == DisableType.PENDING:
-                spot1.disabled = DisableType.DISABLED
-            spot1.world.push_item(spot1, item1)
+        spot_to_fill.world.push_item(spot_to_fill, item_to_place, True)
 
         locations.remove(spot_to_fill)
         window.fillcount += 1

@@ -3,8 +3,7 @@
         "region_name": "Jabu Jabus Belly Beginning",
         "dungeon": "Jabu Jabus Belly",
         "exits": {
-            "Jabu Jabus Belly Main": "
-                has_projectile(either, Adult_Jabu_Jabus_Belly, Child_Jabu_Jabus_Belly)"
+            "Jabu Jabus Belly Main": "can_use_projectile"
         }
     },
     {
@@ -13,20 +12,13 @@
         "locations": {
             "Boomerang Chest": "True",
             "GS Jabu Jabu Water Switch Room": "True",
-            "GS Jabu Jabu Lobby Basement Lower": "
-                (can_use(Boomerang) and Child_Jabu_Jabus_Belly) or
-                (can_use(Hookshot) and Adult_Jabu_Jabus_Belly)",
-            "GS Jabu Jabu Lobby Basement Upper": "
-                (can_use(Boomerang) and Child_Jabu_Jabus_Belly) or
-                (can_use(Hookshot) and Adult_Jabu_Jabus_Belly)",
-            #Adult diving for this scrub is bugged, but this could be weaker
-            "Jabu Deku Scrub Deku Nuts": "
-                can_dive or (Child_Jabu_Jabus_Belly and has_projectile(child))"
+            "GS Jabu Jabu Lobby Basement Lower": "can_use(Boomerang) or can_use(Hookshot)",
+            "GS Jabu Jabu Lobby Basement Upper": "can_use(Boomerang) or can_use(Hookshot)",
+            "Jabu Deku Scrub Deku Nuts": "can_dive or is_child"
         },
         "exits": {
             "Jabu Jabus Belly Beginning": "True",
-            "Jabu Jabus Belly Depths": "
-                can_use(Boomerang) and Child_Jabu_Jabus_Belly"
+            "Jabu Jabus Belly Depths": "can_use(Boomerang)"
         }
     },
     {

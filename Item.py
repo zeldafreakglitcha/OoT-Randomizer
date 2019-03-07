@@ -13,6 +13,7 @@ class Item(object):
         self.price = self.special.get('price')
         self.world = world
         self.looks_like_item = None
+        self.next = None
 
 
     item_worlds_to_fix = {}
@@ -89,11 +90,6 @@ class Item(object):
 
         return True
 
-    def spoilername(self):
-        spoiler = self.name
-        if self.type == "Entrance":
-            spoiler = self.name[6:]
-        return str('%s' % spoiler)
 
     def __str__(self):
         return str(self.__unicode__())
@@ -125,3 +121,19 @@ def ItemFactory(items, world=None):
     if singleton:
         return ret[0]
     return ret
+
+
+def IsItem(name):
+    return name in item_table
+
+
+def isBottle(name):
+    item = ItemFactory(name)
+    return item.special.get('bottle', False)
+
+
+def ItemIterator(predicate=lambda loc: True, world=None):
+    for item_name in item_table:
+        item = ItemFactory(item_name, world)
+        if predicate(item):
+            yield item
