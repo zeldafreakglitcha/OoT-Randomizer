@@ -26,6 +26,7 @@ class State(object):
             new_world = self.world
         new_state = State(new_world)
         new_state.prog_items = copy.copy(self.prog_items)
+        new_state.playthrough = self.playthrough
         return new_state
 
 

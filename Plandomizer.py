@@ -800,6 +800,7 @@ class Distribution(object):
         update_dict = {
             'file_hash': (self.src_dict.get('file_hash', []) + [None, None, None, None, None])[0:5],
             'playthrough': None,
+            'area_playthrough': None,
             'entrance_playthrough': None,
             '_settings': self.src_dict.get('settings', {}),
         }
@@ -939,6 +940,18 @@ class Distribution(object):
             else:
                 self_dict.update({k: world_dist_dicts[0][k] for k in per_world_keys})
 
+            if self.area_playthrough is not None:
+                self_dict[':area_playthrough'] = AllignedDict({
+                    sphere_nr: SortedDict({
+                        area: SortedDict({
+                            name: record.to_json() for name, record in locations.items()
+                        }) 
+                        for area, locations in sphere.items()
+                    })
+                    for (sphere_nr, sphere) in self.area_playthrough.items()
+                }, depth=3)
+
+            
             if self.playthrough is not None:
                 self_dict[':playthrough'] = AllignedDict({
                     sphere_nr: SortedDict({
@@ -946,6 +959,7 @@ class Distribution(object):
                     })
                     for (sphere_nr, sphere) in self.playthrough.items()
                 }, depth=2)
+            
 
             if self.entrance_playthrough is not None and len(self.entrance_playthrough) > 0:
                 self_dict[':entrance_playthrough'] = AllignedDict({
@@ -987,6 +1001,20 @@ class Distribution(object):
             world_dist.woth_locations = {loc.name: LocationRecord.from_item(loc.item) for loc in spoiler.required_locations[world.id]}
             world_dist.barren_regions = [*world.empty_areas]
             world_dist.gossip_stones = {gossipLocations[loc].name: GossipRecord(spoiler.hints[world.id][loc].to_json()) for loc in spoiler.hints[world.id]}
+
+        self.area_playthrough = {}
+        for (sphere_nr, sphere) in spoiler.area_playthrough.items():
+            self.area_playthrough[sphere_nr] = {}
+            for area, locations in sphere.items():
+                loc_rec_sphere = {}
+                self.area_playthrough[sphere_nr][area] = loc_rec_sphere
+                for location in locations:
+                    if spoiler.settings.world_count > 1:
+                        location_key = '%s [W%d]' % (location.name, location.world.id + 1)
+                    else:
+                        location_key = location.name
+
+                    loc_rec_sphere[location_key] = LocationRecord.from_item(location.item)
 
         self.playthrough = {}
         for (sphere_nr, sphere) in spoiler.playthrough.items():

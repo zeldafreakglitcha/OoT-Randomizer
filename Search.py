@@ -16,7 +16,6 @@ class Search(object):
 
         if initial_cache:
             self._cache = initial_cache
-            self.cached_spheres = [self._cache]
         else:
             root_regions = [state.world.get_region('Root') for state in self.state_list]
             # The cache is a dict with 5 values:
@@ -31,7 +30,6 @@ class Search(object):
                 'child_regions': {region: TimeOfDay.NONE for region in root_regions},
                 'adult_regions': {region: TimeOfDay.NONE for region in root_regions},
             }
-            self.cached_spheres = [self._cache]
             self.next_sphere()
 
 
@@ -288,28 +286,60 @@ class Search(object):
 
 
 class RewindableSearch(Search):
+    def __init__(self, state_list, initial_cache=None):
+        super().__init__(state_list, initial_cache)
+        self.cached_spheres = [{k: copy.copy(v) for k, v in self._cache.items()}]
+        self._state_cache = [[state.copy() for state in self.state_list]]
+        self.cache_level = 0
+
+
+    def copy(self):
+        new_cache = {k: copy.copy(v) for k,v in self._cache.items()}
+        new_search = RewindableSearch(self.state_list, new_cache)
+        new_search.cached_spheres = [{k: copy.copy(v) for k, v in sphere.items()} for sphere in self.cached_spheres]
+        new_search._state_cache = [[state.copy() for state in state_list] for state_list in self._state_cache]
+        new_search.cache_level = self.cache_level
+        return new_search
+
 
     def unvisit(self, location):
         # A location being unvisited is either:
         # in the top two caches (if it's the first being unvisited for a sphere)
         # in the topmost cache only (otherwise)
         # After we unvisit every location in a sphere, the top two caches have identical visited locations.
-        assert location in self.cached_spheres[-1]['visited_locations']
-        if location in self.cached_spheres[-2]['visited_locations']:
-            self.cached_spheres.pop()
-            self._cache = self.cached_spheres[-1]
+        assert location in self._cache['visited_locations']
+        if location in self.cached_spheres[-1]['visited_locations']:
+            self._cache = self.cached_spheres.pop()
+            self._state_cache.pop()
         self._cache['visited_locations'].discard(location)
 
 
     def reset(self):
-        self._cache = self.cached_spheres[0]
+        self.rewind(0)
         self.cached_spheres[1:] = []
+        self._state_cache[1:] = []
+
+
+    def rewind(self, index=-1):
+        if index < 0:
+            index = self.cache_level + index + 1
+        else:
+            index = min(index, self.cache_level)
+
+        self._cache = {k: copy.copy(v) for k, v in self.cached_spheres[index].items()}
+        self.state_list = [state.copy() for state in self._state_cache[index]]
+        self.cache_level = index
+        return index
 
 
     # Adds a new layer to the sphere cache, as a copy of the previous.
     def checkpoint(self):
+        self.cache_level += 1
+        self.cached_spheres[self.cache_level:] = []
+        self._state_cache[self.cache_level:] = []
+
         # Save the current data into the cache.
         self.cached_spheres.append({
             k: copy.copy(v) for k, v in self._cache.items()
         })
-        self._cache = self.cached_spheres[-1]
+        self._state_cache.append([state.copy() for state in self.state_list])
