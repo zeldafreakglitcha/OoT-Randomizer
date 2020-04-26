@@ -8,7 +8,7 @@ from State import State
 
 class Search(object):
 
-    def __init__(self, state_list, initial_cache=None):
+    def __init__(self, state_list, initial_cache=None, extra_cache=None):
         self.state_list = [state.copy() for state in state_list]
 
         # Let the states reference this search.
@@ -31,6 +31,8 @@ class Search(object):
                 'child_regions': {region: TimeOfDay.NONE for region in root_regions},
                 'adult_regions': {region: TimeOfDay.NONE for region in root_regions},
             }
+            if extra_cache:
+                self._cache.update(extra_cache)
             self.next_sphere()
 
 
@@ -287,8 +289,8 @@ class Search(object):
 
 
 class RewindableSearch(Search):
-    def __init__(self, state_list, initial_cache=None):
-        super().__init__(state_list, initial_cache)
+    def __init__(self, state_list, initial_cache=None, extra_cache=None):
+        super().__init__(state_list, initial_cache, extra_cache)
         self.cached_spheres = [{k: copy.copy(v) for k, v in self._cache.items()}]
         self._state_cache = [[state.copy() for state in self.state_list]]
         self.cache_level = 0
@@ -344,3 +346,146 @@ class RewindableSearch(Search):
             k: copy.copy(v) for k, v in self._cache.items()
         })
         self._state_cache.append([state.copy() for state in self.state_list])
+
+
+class AreaFirstSearch(RewindableSearch):
+    def __init__(self, state_list):
+        # new cache params:
+        # - child: whether this sphere is solely considering child access
+        # - child_areas, adult_areas: visitable/explorable areas as that age
+        super().__init__(state_list, extra_cache={
+            'age': [state.world.starting_age for state in state_list],
+            'child': [{'Unknown'} for state in state_list],
+            'adult': [{'Unknown'} for state in state_list],
+            'last': [False for state in state_list],
+        })
+
+
+    def _expand_regions_in_areas(self, exit_queue, regions, ages, areas, age):
+        # exits in the queue aren't divided by world, we have to check each
+        failed = []
+        for exit in exit_queue:
+            # drop bad entries; keep within allowed areas
+            # TODO: save the out-of-area exits?
+            # TODO: or expand regions without regard to areas, but only collect in-area? Aside from tod...
+            if (exit.connected_region and exit.connected_region not in regions
+                    and ages[exit.world.id] == age
+                    and get_region_area_name(exit.connected_region) in areas[exit.world.id]):
+                # Evaluate the access rule directly, without tod
+                if exit.access_rule(self.state_list[exit.world.id], spot=exit, age=age):
+                    regions[exit.connected_region] = exit.connected_region.provides_time
+                    regions[exit.world.get_region('Root')] |= exit.connected_region.provides_time
+                    exit_queue.extend(exit.connected_region.exits)
+                else:
+                    failed.append(exit)
+        return failed
+
+
+    def next_in_area(self):
+        # Essentially the base next_sphere, but supplying _cache entries
+        self._cache.update({
+            'adult_queue': self._expand_regions_in_areas(
+                self._cache['adult_queue'], self._cache['adult_regions'],
+                self._cache['age'], self._cache['adult'], 'adult'),
+            'child_queue': self._expand_regions_in_areas(
+                self._cache['child_queue'], self._cache['child_regions'],
+                self._cache['age'], self._cache['child'], 'child'),
+        })
+        return self._cache['child_regions'], self._cache['adult_regions'], self._cache['visited_locations']
+
+
+    def next_sphere(self):
+        # For each world that didn't have anything reachable,
+        # try to find a new area to explore. if it is unable to find a new area and has time travel,
+        # switch its age.
+        # Refill the queues. Don't worry about in-area, that'll be checked elsewhere.
+        self._cache.update({
+            'child_queue': list(exit for region in self._cache['child_regions'] for exit in region.exits),
+            'adult_queue': list(exit for region in self._cache['adult_regions'] for exit in region.exits),
+        })
+        # We do this by... just expanding!
+        super().next_sphere()
+        # then find all worlds with new areas
+        world_has_new = [False for state in self.state_list]
+        for region in self._cache['child_regions']:
+            # skip if we don't care
+            if self._cache['last'][region.world.id]:
+                continue
+            if get_region_area_name(region) not in self._cache['child'][region.world.id]:
+                if self._cache['age'][region.world.id] == 'child':
+                    world_has_new[region.world.id] = True
+                self._cache['child'][region.world.id].add(get_region_area_name(region))
+
+        for region in self._cache['adult_regions']:
+            # skip if we don't care
+            if self._cache['last'][region.world.id]:
+                continue
+            if get_region_area_name(region) not in self._cache['adult'][region.world.id]:
+                if self._cache['age'][region.world.id] == 'adult':
+                    world_has_new[region.world.id] = True
+                self._cache['adult'][region.world.id].add(get_region_area_name(region))
+
+        return world_has_new
+
+
+    def try_age_swap(self, world_has_new):
+        # Switches age for any world that didn't add new areas in its current age
+        for i in range(len(self.state_list)):
+            if not self._cache['last'][i] and not world_has_new[i] and self.state_list[i].has('Time Travel'):
+                self._cache['age'][i] = 'adult' if self._cache['age'][i] == 'child' else 'child'
+
+
+    # Collects any automatic locations along the way.
+    def iter_reachable_locations(self, item_locations, automatic_locations):
+        self.try_age_swap(self.next_sphere())
+
+        self._cache['last'] = [False for state in self.state_list]
+
+        child_areas = self._cache['child']
+        adult_areas = self._cache['adult']
+        ages = self._cache['age']
+        had_reachable_locations = True
+        had_auto_locations = True
+        # will loop as long as any visits were made, and at least once
+        while had_reachable_locations or had_auto_locations:
+            # If we picked up any internal locations, we have to expand areas
+            # to avoid switching ages (or not) incorrectly
+            if had_auto_locations:
+                self.next_sphere()
+                had_auto_locations = False
+            child_regions, adult_regions, visited_locations = self.next_in_area()
+
+            # Get all locations in accessible_regions that aren't visited,
+            # and check if they can be reached. Collect them.
+            had_reachable_locations = False
+            for loc in item_locations:
+                if loc in visited_locations:
+                    continue
+                if ages[loc.world.id] == 'child':
+                    if (get_region_area_name(loc.parent_region) in child_areas[loc.world.id]
+                            and loc.parent_region in child_regions
+                            and loc.access_rule(self.state_list[loc.world.id], spot=loc, age='child')):
+                        visited_locations.add(loc)
+                        if loc in automatic_locations:
+                            had_auto_locations = True
+                            self.collect(loc.item)
+                        else:
+                            had_reachable_locations = True
+                            self._cache['last'][loc.world.id] = True
+                            yield loc
+                else:
+                    if (get_region_area_name(loc.parent_region) in adult_areas[loc.world.id]
+                            and loc.parent_region in adult_regions
+                            and loc.access_rule(self.state_list[loc.world.id], spot=loc, age='adult')):
+                        visited_locations.add(loc)
+                        if loc in automatic_locations:
+                            had_auto_locations = True
+                            self.collect(loc.item)
+                        else:
+                            had_reachable_locations = True
+                            self._cache['last'][loc.world.id] = True
+                            yield loc
+
+
+    def current_ages(self):
+        return self._cache['age']

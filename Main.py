@@ -30,7 +30,7 @@ from N64Patch import create_patch_file, apply_patch_file
 from SettingsList import setting_infos, logic_tricks
 from Rules import set_rules, set_shop_rules
 from Plandomizer import Distribution
-from Search import Search, RewindableSearch
+from Search import Search, RewindableSearch, AreaFirstSearch
 from EntranceShuffle import set_entrances
 from LocationList import set_drop_location_names
 
@@ -684,6 +684,32 @@ def create_playthrough(spoiler):
 
 
     # Area Sphere playthrough:
+    # summary:
+    # 0) produce regular playthrough
+    # 1) determine required areas from playthrough locations
+    # 2) collect playthrough locations separately by area, in spheres
+    # 3) attempt to merge areas into later spheres, validate each merge
+    # 4) re-collect area-spheres into spheres for final output
+
+    # alternate approach idea:
+    # 0) regular playthrough
+    # 1) determine required locations (aka woth), turn into required areas
+    # 2) sum playthrough items
+    # 3) find items in required areas where possible; where not possible, add new areas to required
+
+    # 0) skip regular playthrough
+    # 1) determine required locations (aka woth), turn into required areas
+    #    this will not include replaceables
+    # 2) ?? find necessary items somehow?
+    #    or use as input to an area+age-based search:
+
+    # different search to build initial area+age-based playthrough:
+    # - store per-world: current age, visited/unvisited but reached areas
+    # - expand regions: don't consider entrances in unvisited areas
+    # - iterate: collect locations in current age in visited areas
+    #   when none are left, consider unvisited areas (in some order? all at once?)
+    #    by marking them visited, and inc sphere count.
+    #   when no unvisited areas, and Time Travel, switch age, inc sphere, mark starting area visited
 
     # build the area sets
     area_name_map = {
@@ -890,6 +916,117 @@ def create_playthrough(spoiler):
             {area : {location : location.item for location in locations}
             for area, locations in sphere.items()})
         for i, sphere in enumerate(final_area_spheres))
+
+    # New area search
+    area_search = AreaFirstSearch([world.state for world in worlds])
+    # Get all item locations in the worlds
+    item_locations = area_search.progression_locations()
+    # Omit certain items from the playthrough
+    internal_locations = {location for location in item_locations if location.internal}
+    collection_spheres = []
+    entrance_spheres = []
+    remaining_entrances = set(entrance for world in worlds for entrance in world.get_shuffled_entrances())
+
+    while True:
+        area_search.checkpoint()
+        # Not collecting while the generator runs means we only get one sphere at a time
+        # Otherwise, an item we collect could influence later item collection in the same sphere
+        collected = list(area_search.iter_reachable_locations(item_locations, internal_locations))
+        if not collected:
+            collected.extend(area_search.iter_reachable_locations(required_locations, internal_locations))
+            if not collected:
+                break
+        # Gather the new entrances before collecting items.
+        collection_spheres.append(collected)
+        accessed_entrances = set(filter(area_search.spot_access, remaining_entrances))
+        entrance_spheres.append(accessed_entrances)
+        remaining_entrances -= accessed_entrances
+        for location in collected:
+            # Collect the item for the state world it is for
+            area_search.collect(location.item)
+    logger.info('Collected %d spheres (area new)', len(collection_spheres))
+
+    # Reduce each sphere in reverse order, by checking if the game is beatable
+    # when we remove the item. We do this to make sure that progressive items
+    # like bow and slingshot appear as early as possible rather than as late as possible.
+    required_locations = list(internal_locations)
+    for sphere in reversed(collection_spheres):
+        for location in sphere:
+            # we remove the item at location and check if the game is still beatable in case the item could be required
+            old_item = location.item
+
+            # Uncollect the item and location.
+            area_search.uncollect(old_item)
+            area_search.unvisit(location)
+
+            # Generic events might show up or not, as usual, but since we don't
+            # show them in the final output, might as well skip over them. We'll
+            # still need them in the final pass, so make sure to include them.
+            if location.internal:
+                required_locations.append(location)
+                continue
+
+            location.item = None
+
+            # An item can only be required if it isn't already obtained or if it's progressive
+            if area_search.state_list[old_item.world.id].item_count(old_item.name) < old_item.world.max_progressions[old_item.name]:
+                # Test whether the game is still beatable from here.
+                logger.debug('Checking if %s is required to beat the game.', old_item.name)
+                if not area_search.can_beat_game():
+                    # still required, so reset the item
+                    location.item = old_item
+                    required_locations.append(location)
+
+    # Reduce each entrance sphere in reverse order, by checking if the game is beatable when we disconnect the entrance.
+    required_entrances = []
+    for sphere in reversed(entrance_spheres):
+        for entrance in sphere:
+            # we disconnect the entrance and check if the game is still beatable
+            old_connected_region = entrance.disconnect()
+
+            # we use a new search to ensure the disconnected entrance is no longer used
+            sub_search = Search([world.state for world in worlds])
+
+            # Test whether the game is still beatable from here.
+            logger.debug('Checking if reaching %s, through %s, is required to beat the game.', old_connected_region.name, entrance.name)
+            if not sub_search.can_beat_game():
+                # still required, so reconnect the entrance
+                entrance.connect(old_connected_region)
+                required_entrances.append(entrance)
+
+    # Regenerate the spheres as we might not reach places the same way anymore.
+    area_search.reset() # search state has no items, okay to reuse sphere 0 cache
+    collection_spheres = []
+    age_spheres = []
+    entrance_spheres = []
+    remaining_entrances = set(required_entrances)
+    collected = []
+    while True:
+        # Not collecting while the generator runs means we only get one sphere at a time
+        # Otherwise, an item we collect could influence later item collection in the same sphere
+        collected.extend(area_search.iter_reachable_locations(required_locations, internal_locations))
+        if not collected:
+            collected.extend(area_search.iter_reachable_locations(required_locations, internal_locations))
+            if not collected:
+                break
+        # Gather the new entrances before collecting items.
+        collection_spheres.append(list(collected))
+        age_spheres.append(list(area_search.current_ages()))
+        # Might not be accurate; entrances can be used despite not looting a new area
+        accessed_entrances = set(filter(area_search.spot_access, remaining_entrances))
+        entrance_spheres.append(accessed_entrances)
+        remaining_entrances -= accessed_entrances
+        for location in collected:
+            # Collect the item for the state world it is for
+            area_search.collect(location.item)
+        collected.clear()
+    logger.info('Collected %d final area spheres (new)', len(collection_spheres))
+
+    spoiler.playthrough2 = OrderedDict((i, {k: {'age': age, 'locations': {}} for k, age in enumerate(age_sphere)}) for i, age_sphere in enumerate(age_spheres))
+    for i, sphere in enumerate(collection_spheres):
+        for location in sphere:
+            spoiler.playthrough2[i][location.world.id]['locations'][location] = location.item
+
 
     if worlds[0].entrance_shuffle != 'off':
         spoiler.entrance_playthrough = OrderedDict((str(i + 1), list(sphere)) for i, sphere in enumerate(entrance_spheres))

@@ -800,6 +800,7 @@ class Distribution(object):
         update_dict = {
             'file_hash': (self.src_dict.get('file_hash', []) + [None, None, None, None, None])[0:5],
             'playthrough': None,
+            'playthrough2': None,
             'area_playthrough': None,
             'entrance_playthrough': None,
             '_settings': self.src_dict.get('settings', {}),
@@ -951,7 +952,6 @@ class Distribution(object):
                     for (sphere_nr, sphere) in self.area_playthrough.items()
                 }, depth=3)
 
-            
             if self.playthrough is not None:
                 self_dict[':playthrough'] = AllignedDict({
                     sphere_nr: SortedDict({
@@ -960,6 +960,20 @@ class Distribution(object):
                     for (sphere_nr, sphere) in self.playthrough.items()
                 }, depth=2)
             
+
+            if self.playthrough2 is not None:
+                self_dict[':playthrough2'] = AllignedDict({
+                    sphere_nr: SortedDict({
+                        world_nr: SortedDict({
+                            'age': w['age'],
+                            'locations': SortedDict({
+                                name: record.to_json() for name, record in w['locations'].items()
+                            }),
+                        })
+                        for (world_nr, w) in sphere.items()
+                    })
+                    for (sphere_nr, sphere) in self.playthrough2.items()
+                }, depth=4)
 
             if self.entrance_playthrough is not None and len(self.entrance_playthrough) > 0:
                 self_dict[':entrance_playthrough'] = AllignedDict({
@@ -1027,6 +1041,19 @@ class Distribution(object):
                     location_key = location.name
 
                 loc_rec_sphere[location_key] = LocationRecord.from_item(location.item)
+
+        self.playthrough2 = {}
+        for (sphere_idx, sphere) in spoiler.playthrough2.items():
+            sphere_worlds = {}
+            self.playthrough2[str(sphere_idx + 1)] = sphere_worlds
+            for (world_idx, wsphere) in sphere.items():
+                sphere_worlds[f'World {world_idx + 1}'] = {
+                    'age': wsphere['age'],
+                    'locations': {
+                        location.name: LocationRecord.from_item(location.item)
+                        for location in wsphere['locations']
+                    }
+                }
 
         self.entrance_playthrough = {}
         for (sphere_nr, sphere) in spoiler.entrance_playthrough.items():

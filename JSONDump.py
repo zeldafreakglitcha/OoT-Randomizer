@@ -60,7 +60,8 @@ def dump_list(obj, current_indent=''):
 
 def get_keys(obj, depth):
     if depth == 0:
-        yield from obj.keys()
+        if isinstance(obj, dict):
+            yield from obj.keys()
     else:
         for value in obj.values():
             yield from get_keys(value, depth - 1)
