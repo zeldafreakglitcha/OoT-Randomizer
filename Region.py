@@ -86,3 +86,33 @@ class Region(object):
     def __unicode__(self):
         return '%s' % self.name
 
+
+def get_region_area(region):
+    if region.dungeon:
+        return region.dungeon.hint
+    elif region.hint:
+        return region.hint
+    #Breadth first search for connected regions with a max depth of 2
+    for entrance in region.entrances:
+        if entrance.parent_region.hint:
+            return entrance.parent_region.hint
+    for entrance in region.entrances:
+        for entrance2 in entrance.parent_region.entrances:
+            if entrance2.parent_region.hint:
+                return entrance2.parent_region.hint
+    raise RuntimeError('No hint area could be found for %s [World %d]' % (spot, spot.world.id))
+
+
+area_name_map = {
+    'the Graveyard': 'Kakariko Graveyard',
+    'the Market': 'Castle Market',
+    'outside Ganon\'s Castle': 'Outside Ganon\'s Castle',
+    'the Lost Woods': 'Lost Woods',
+    None: 'Unknown',
+}
+
+def get_region_area_name(reg):
+    a = get_region_area(reg)
+    if a in area_name_map:
+        return area_name_map[a]
+    return a

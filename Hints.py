@@ -9,6 +9,7 @@ from collections import OrderedDict
 from HintList import getHint, getHintGroup, Hint, hintExclusions
 from Item import MakeEventItem
 from Messages import update_message_by_id
+from Region import get_region_area
 from Search import Search
 from TextBox import line_wrap
 from Utils import random_choices, data_path, read_json
@@ -262,22 +263,6 @@ def colorText(gossip_text):
         text = ''.join(splitText)
 
     return text
-
-
-def get_hint_area(spot):
-    if spot.parent_region.dungeon:
-        return spot.parent_region.dungeon.hint
-    elif spot.parent_region.hint:
-        return spot.parent_region.hint
-    #Breadth first search for connected regions with a max depth of 2
-    for entrance in spot.parent_region.entrances:
-        if entrance.parent_region.hint:
-            return entrance.parent_region.hint
-    for entrance in spot.parent_region.entrances:
-        for entrance2 in entrance.parent_region.entrances:
-            if entrance2.parent_region.hint:
-                return entrance2.parent_region.hint
-    raise RuntimeError('No hint area could be found for %s [World %d]' % (spot, spot.world.id))
 
 
 def get_woth_hint(spoiler, world, checked):
@@ -772,6 +757,9 @@ def buildGanonText(world, messages):
 
     update_message_by_id(messages, 0x70CC, text)
 
+
+def get_hint_area(spot):
+    return get_region_area(spot.parent_region)
 
 def get_raw_text(string):
     text = ''
