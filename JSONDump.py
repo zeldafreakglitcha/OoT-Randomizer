@@ -106,7 +106,7 @@ def dump_dict(obj, current_indent='', sub_width=None):
             key='{key}:'.format(key=key), 
             value=value,
             indent=current_indent + INDENT,
-            padding=key_width + 2,
+            padding=key_width + 3,
         ) for (key, value) in entries])
     )
 
