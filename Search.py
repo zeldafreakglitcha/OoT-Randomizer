@@ -160,7 +160,7 @@ class Search(object):
     # Inside the loop, the caller usually wants to collect items at these
     # locations to see if the game is beatable. Collection should be done
     # using internal State (recommended to just call search.collect).
-    def iter_reachable_locations(self, item_locations):
+    def iter_reachable_locations(self, item_locations, automatic_locations=()):
         had_reachable_locations = True
         # will loop as long as any visits were made, and at least once
         while had_reachable_locations:
@@ -436,7 +436,7 @@ class AreaFirstSearch(RewindableSearch):
 
 
     # Collects any automatic locations along the way.
-    def iter_reachable_locations(self, item_locations, automatic_locations):
+    def iter_reachable_locations(self, item_locations, automatic_locations=()):
         self.try_age_swap(self.next_sphere())
 
         self._cache['last'] = [False for state in self.state_list]

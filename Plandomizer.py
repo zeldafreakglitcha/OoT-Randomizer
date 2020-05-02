@@ -965,10 +965,10 @@ class Distribution(object):
                 self_dict[':playthrough2'] = AllignedDict({
                     sphere_nr: SortedDict({
                         world_nr: SortedDict({
-                            'age': w['age'],
-                            'locations': SortedDict({
-                                name: record.to_json() for name, record in w['locations'].items()
-                            }),
+                            category: SortedDict({
+                                name: record.to_json() for name, record in locs.items()
+                            })
+                            for (category, locs) in w.items()
                         })
                         for (world_nr, w) in sphere.items()
                     })
@@ -1046,13 +1046,13 @@ class Distribution(object):
         for (sphere_idx, sphere) in spoiler.playthrough2.items():
             sphere_worlds = {}
             self.playthrough2[str(sphere_idx + 1)] = sphere_worlds
-            for (world_idx, wsphere) in sphere.items():
-                sphere_worlds[f'World {world_idx + 1}'] = {
-                    'age': wsphere['age'],
-                    'locations': {
+            for (world_nr, wsphere) in sphere.items():
+                sphere_worlds[world_nr] = {
+                    category: {
                         location.name: LocationRecord.from_item(location.item)
-                        for location in wsphere['locations']
+                        for location in locs
                     }
+                    for category, locs in wsphere.items()
                 }
 
         self.entrance_playthrough = {}
