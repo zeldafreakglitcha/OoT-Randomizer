@@ -351,8 +351,9 @@ class RewindableSearch(Search):
 class AreaFirstSearch(RewindableSearch):
     def __init__(self, state_list):
         # new cache params:
-        # - child: whether this sphere is solely considering child access
+        # - age: which age this sphere is solely considering access for
         # - child_areas, adult_areas: visitable/explorable areas as that age
+        # - last: if we found a reachable location last time, we can skip switching ages for now
         super().__init__(state_list, extra_cache={
             'age': [state.world.starting_age for state in state_list],
             'child': [{'Unknown'} for state in state_list],
@@ -489,3 +490,11 @@ class AreaFirstSearch(RewindableSearch):
 
     def current_ages(self):
         return self._cache['age']
+
+
+    # Returns the age spheres that correspond to each area sphere, providing that
+    # checkpoint has been called once per sphere. The top (current) sphere is not
+    # provided, and the bottom sphere(s) may need to be trimmed. Do not modify
+    # any of the entries.
+    def age_spheres(self):
+        return [_c['age'] for _c in self.cached_spheres[:self.cache_level + 1]]

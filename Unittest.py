@@ -363,6 +363,8 @@ class TestValidSpoilers(unittest.TestCase):
         self.required_checks(spoiler, *self.loc_item_collection(woth))
 
     def verify_playthrough(self, spoiler):
+        # This test is not a validation of logic, it's a check that we collected
+        # all necessary items and no unnecessary items.
         pl = spoiler[':playthrough']
         locations, items, locitems = self.loc_item_collection(pl)
         self.required_checks(spoiler, locations, items, locitems)

@@ -557,6 +557,17 @@ def update_required_items(spoiler):
     spoiler.required_locations = required_locations_dict
 
 
+def locations_to_area_map(locations):
+    area_map = {}
+    for location in locations:
+        area = get_region_area_name(location.parent_region)
+        if area not in area_map:
+            area_map[area] = [location]
+        else:
+            area_map[area].append(location)
+    return area_map
+
+
 def create_playthrough(spoiler):
     worlds = spoiler.worlds
     if worlds[0].check_beatable_only and not Search([world.state for world in worlds]).can_beat_game():
@@ -712,65 +723,14 @@ def create_playthrough(spoiler):
     #    by marking them visited, and inc sphere count.
     #   when no unvisited areas, and Time Travel, switch age, inc sphere, mark starting area visited
 
-    # build the area sets
-    def build_area_spheres(search, required_locations):
-        required_areas = {}
-        for location in required_locations:
-            if location in internal_locations:
-                continue
-
-            location_hint = get_region_area_name(location.parent_region)
-
-            if location_hint not in required_areas:
-                required_areas[location_hint] = set()
-            required_areas[location_hint].add(location)
-
-        # Build the initial area spheres
-        search.reset()
-        area_collection_spheres = []
-        collected = True
-        while collected:
-            collected = set()
-            sphere = {}
-
-            # Collect each area individually fully
-            for area, locations in required_areas.items():
-                collected_area = set()
-
-                # Collect as many locations in the area as possible
-                for location in search.iter_reachable_locations(locations | internal_locations):
-                    search.collect(location.item)
-                    collected.add(location)
-                    if location not in internal_locations:
-                        collected_area.add(location)
-                search.rewind() # Area collection shouldn't affect other areas of the sphere
-
-                # add the area sphere if not empty
-                if collected_area:
-                    sphere[area] = collected_area
-
-            # Remove any collected locations from the areas list
-            for area, locations in required_areas.items():
-                required_areas[area] -= collected
-            required_areas = {area: locations for area, locations in required_areas.items() if len(locations) > 0}
-
-            # Add the new sphere and collect all their items
-            if sphere:
-                area_collection_spheres.append(sphere)
-            search.collect_locations(collected)
-            search.checkpoint()
-
-        return area_collection_spheres
-
-    area_collection_spheres = build_area_spheres(search, required_locations)
-    logger.info('Collected %d area spheres', len(area_collection_spheres))
-
-
     class InvalidPlaythrough(Exception):
         pass
 
     # Called after merging two areas together. Tests whether the merge was
     # valid and attempts to move spheres to satisfy this
+    # input: current search, list of {area->locations} spheres, area being tested, low/high sphere idx
+    # modifies area_spheres
+    # returns new search or throws exception
     def validate_spheres(search, area_spheres, test_area, low, high):
         sub_search = search.copy()
         low = sub_search.rewind(low)
@@ -826,6 +786,10 @@ def create_playthrough(spoiler):
 
 
     # Try to merge the area with the next occurence of the area in the spheres
+    # input: search, [{area -> locations} spheres], idx of sphere with area, area in that sphere
+    # returns: search, [{area -> locations} spheres] after attempt at merging.
+    # TODO: attempt to merge only within each world? Does that make sense? It otherwise seems silly
+    # to attempt merging areas from different worlds.
     def merge_areas(search, area_spheres, low, area):
         for high in range(low+1, len(area_spheres)):
             for area_other in area_spheres[high]:
@@ -833,8 +797,9 @@ def create_playthrough(spoiler):
                     # Found a match, attempt to merge them
                     try:
                         # Create a sphere set with the areas merged
-                        new_spheres = [{area: {location for location in locations} 
-                                for area, locations in sphere.items()} 
+                        new_spheres = [
+                                {a: {location for location in locations}
+                                 for a, locations in sphere.items()}
                             for sphere in area_spheres]
                         new_spheres[high][area] |= new_spheres[low][area]
                         del new_spheres[low][area]
@@ -852,6 +817,8 @@ def create_playthrough(spoiler):
         return search, area_spheres
 
 
+    # input: search, [{area -> location} dicts], required_entrances
+    # returns: search, [{area -> location} dicts], [{entrance} sets]
     def reduce_area_spheres(search, area_collection_spheres, required_entrances):
         # Merge all possible areas in the spheres
         s = 0
@@ -906,22 +873,13 @@ def create_playthrough(spoiler):
         remaining_entrances -= accessed_entrances
         return search, final_area_spheres, entrance_spheres
 
-    search, final_area_spheres, _ = reduce_area_spheres(search, area_collection_spheres, required_entrances)
-    logger.info('Collected %d final area spheres', len(final_area_spheres))
-
-    # Generate playthrough spoiler structs
-    spoiler.area_playthrough = OrderedDict((str(i + 1), 
-            {area : {location : location.item for location in locations}
-            for area, locations in sphere.items()})
-        for i, sphere in enumerate(final_area_spheres))
-
     # New area search
     area_search = AreaFirstSearch([world.state for world in worlds])
     # Get all item locations in the worlds
     item_locations = area_search.progression_locations()
     # Omit certain items from the playthrough
     internal_locations = {location for location in item_locations if location.internal}
-    collection_spheres = []
+    area_collection_spheres = []
     entrance_spheres = []
     remaining_entrances = set(entrance for world in worlds for entrance in world.get_shuffled_entrances())
 
@@ -935,20 +893,20 @@ def create_playthrough(spoiler):
             if not collected:
                 break
         # Gather the new entrances before collecting items.
-        collection_spheres.append(collected)
+        area_collection_spheres.append(collected)
         accessed_entrances = set(filter(area_search.spot_access, remaining_entrances))
         entrance_spheres.append(accessed_entrances)
         remaining_entrances -= accessed_entrances
         for location in collected:
             # Collect the item for the state world it is for
             area_search.collect(location.item)
-    logger.info('Collected %d area-based spheres (new)', len(collection_spheres))
+    logger.info('Collected %d area-based spheres', len(area_collection_spheres))
 
     # Reduce each sphere in reverse order, by checking if the game is beatable
     # when we remove the item. We do this to make sure that progressive items
     # like bow and slingshot appear as early as possible rather than as late as possible.
     required_locations = list(internal_locations)
-    for sphere in reversed(collection_spheres):
+    for sphere in reversed(area_collection_spheres):
         for location in sphere:
             # we remove the item at location and check if the game is still beatable in case the item could be required
             old_item = location.item
@@ -994,12 +952,12 @@ def create_playthrough(spoiler):
 
     # Regenerate the spheres as we might not reach places the same way anymore.
     area_search.reset() # search state has no items, okay to reuse sphere 0 cache
-    collection_spheres = []
-    age_spheres = []
+    area_collection_spheres = []
     entrance_spheres = []
     remaining_entrances = set(required_entrances)
     collected = []
     while True:
+        area_search.checkpoint()
         # Not collecting while the generator runs means we only get one sphere at a time
         # Otherwise, an item we collect could influence later item collection in the same sphere
         collected.extend(area_search.iter_reachable_locations(required_locations, internal_locations))
@@ -1008,8 +966,7 @@ def create_playthrough(spoiler):
             if not collected:
                 break
         # Gather the new entrances before collecting items.
-        collection_spheres.append(list(collected))
-        age_spheres.append(list(area_search.current_ages()))
+        area_collection_spheres.append(locations_to_area_map(collected))
         # Might not be accurate; entrances can be used despite not looting a new area
         accessed_entrances = set(filter(area_search.spot_access, remaining_entrances))
         entrance_spheres.append(accessed_entrances)
@@ -1018,23 +975,24 @@ def create_playthrough(spoiler):
             # Collect the item for the state world it is for
             area_search.collect(location.item)
         collected.clear()
-    logger.info('Collected %d final area-based spheres (new)', len(collection_spheres))
+    logger.info('Collected %d final area-based spheres', len(area_collection_spheres))
 
-    spoiler.playthrough2 = OrderedDict((i, {f'World {k} ({age})': {'locations': []} for k, age in enumerate(age_sphere)}) for i, age_sphere in enumerate(age_spheres))
-    for i, sphere in enumerate(collection_spheres):
-        for location in sphere:
-            w = f'World {location.world.id} ({age_spheres[i][location.world.id]})'
-            spoiler.playthrough2[i][w]['locations'].append(location)
-            area = get_region_area_name(location.parent_region)
-            if area not in spoiler.playthrough2[i][w]:
-                spoiler.playthrough2[i][w][area] = [location]
-            else:
-                spoiler.playthrough2[i][w][area].append(location)
+    search, final_area_spheres, _ = reduce_area_spheres(search, area_collection_spheres, required_entrances)
+    logger.info('Collected %d final area spheres', len(final_area_spheres))
 
-    # This may require some modification, as the original spheres have the area information already
-    # attached, but also spheres are age-specific, potentially making it trickier to merge areas together.
-    #area_collection_spheres = build_area_spheres(search, required_locations)
-    #logger.info('Collected %d area spheres', len(area_collection_spheres))
+    # First two spheres are bogus, from init/reset and the first checkpoint
+    age_spheres = area_search.age_spheres()[2:]
+
+    # Generate playthrough spoiler structs
+    spoiler.area_playthrough = OrderedDict((i, {f'World {k} ({age})': {} for k, age in enumerate(age_sphere)}) for i, age_sphere in enumerate(age_spheres))
+    for i, sphere in enumerate(final_area_spheres):
+        for area, locations in sphere.items():
+            for location in locations:
+                w = f'World {location.world.id} ({age_spheres[i][location.world.id]})'
+                if area not in spoiler.area_playthrough[i][w]:
+                    spoiler.area_playthrough[i][w][area] = [location]
+                else:
+                    spoiler.area_playthrough[i][w][area].append(location)
 
     if worlds[0].entrance_shuffle != 'off':
         spoiler.entrance_playthrough = OrderedDict((str(i + 1), list(sphere)) for i, sphere in enumerate(entrance_spheres))
