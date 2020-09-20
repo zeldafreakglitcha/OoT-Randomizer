@@ -298,7 +298,7 @@ class RewindableSearch(Search):
 
     def copy(self):
         new_cache = {k: copy.copy(v) for k,v in self._cache.items()}
-        new_search = RewindableSearch(self.state_list, new_cache)
+        new_search = self.__class__(self.state_list, new_cache)
         new_search.cached_spheres = [{k: copy.copy(v) for k, v in sphere.items()} for sphere in self.cached_spheres]
         new_search._state_cache = [[state.copy() for state in state_list] for state_list in self._state_cache]
         new_search.cache_level = self.cache_level
@@ -349,12 +349,12 @@ class RewindableSearch(Search):
 
 
 class AreaFirstSearch(RewindableSearch):
-    def __init__(self, state_list):
+    def __init__(self, state_list, initial_cache=None):
         # new cache params:
         # - age: which age this sphere is solely considering access for
         # - child_areas, adult_areas: visitable/explorable areas as that age
         # - last: if we found a reachable location last time, we can skip switching ages for now
-        super().__init__(state_list, extra_cache={
+        super().__init__(state_list, initial_cache=initial_cache, extra_cache={
             'age': [state.world.starting_age for state in state_list],
             'child': [{'Unknown'} for state in state_list],
             'adult': [{'Unknown'} for state in state_list],
@@ -488,13 +488,12 @@ class AreaFirstSearch(RewindableSearch):
                             yield loc
 
 
+    def collect_locations(self, item_locations=None, automatic_locations=()):
+        item_locations = item_locations or self.progression_locations()
+        for location in self.iter_reachable_locations(item_locations, automatic_locations=automatic_locations):
+            # Collect the item for the state world it is for
+            self.collect(location.item)
+
+
     def current_ages(self):
-        return self._cache['age']
-
-
-    # Returns the age spheres that correspond to each area sphere, providing that
-    # checkpoint has been called once per sphere. The top (current) sphere is not
-    # provided, and the bottom sphere(s) may need to be trimmed. Do not modify
-    # any of the entries.
-    def age_spheres(self):
-        return [_c['age'] for _c in self.cached_spheres[:self.cache_level + 1]]
+        return tuple(self._cache['age'])
