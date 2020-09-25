@@ -1014,7 +1014,11 @@ class Distribution(object):
                 else:
                     location_key = location.name
 
-                loc_rec_sphere[location_key] = LocationRecord.from_item(location.item)
+                if location.item:
+                    loc_rec_sphere[location_key] = LocationRecord.from_item(location.item)
+                else:
+                    # We deleted it during the area playthrough
+                    loc_rec_sphere[location_key] = LocationRecord.from_item(spoiler.locations[location.world.id][location.name])
 
         self.area_playthrough = {}
         for (sphere_idx, sphere) in spoiler.area_playthrough.items():

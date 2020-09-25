@@ -100,6 +100,9 @@ class Location(object):
     def has_progression_item(self):
         return self.item is not None and self.item.advancement
 
+    def has_area_item(self):
+        return self.item is not None and self.item.area_item
+
 
     def __str__(self):
         return str(self.__unicode__())

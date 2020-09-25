@@ -15,6 +15,7 @@ import time
 import zipfile
 
 from Region import get_region_area_name
+from Location import Location
 from World import World
 from Spoiler import Spoiler
 from Rom import Rom
@@ -754,9 +755,9 @@ def create_playthrough(spoiler):
                         logger.debug(f'{area} of sphere {s+1} is not reachable and cannot be moved.')
 
                         raise InvalidPlaythrough(f'{area} of sphere {s+1} is not reachable and cannot be moved.')
+                    # Otherwise attempt to move the unreachable area to later
                     exceptions.append((s, area))
                 else:
-                    # Otherwise attempt to move the unreachable area to later
                     sphere_locations |= locations
                 sub_search.rewind()
 
@@ -879,11 +880,14 @@ def create_playthrough(spoiler):
         return search, final_area_spheres, entrance_spheres
 
     # New area search
+    worlds = copy_worlds(old_worlds)
     area_search = AreaFirstSearch([world.state for world in worlds])
     # Get all item locations in the worlds
     item_locations = area_search.progression_locations()
     # Omit certain items from the playthrough
     internal_locations = {location for location in item_locations if location.internal}
+    key_locations = set(filter(Location.has_area_item, item_locations))
+    auto_locations = internal_locations | key_locations
     area_collection_spheres = []
     entrance_spheres = []
     remaining_entrances = set(entrance for world in worlds for entrance in world.get_shuffled_entrances())
@@ -892,9 +896,9 @@ def create_playthrough(spoiler):
         area_search.checkpoint()
         # Not collecting while the generator runs means we only get one sphere at a time
         # Otherwise, an item we collect could influence later item collection in the same sphere
-        collected = list(area_search.iter_reachable_locations(item_locations, internal_locations))
+        collected = list(area_search.iter_reachable_locations(item_locations, auto_locations))
         if not collected:
-            collected.extend(area_search.iter_reachable_locations(required_locations, internal_locations))
+            collected.extend(area_search.iter_reachable_locations(item_locations, auto_locations))
             if not collected:
                 break
         # Gather the new entrances before collecting items.
@@ -903,16 +907,19 @@ def create_playthrough(spoiler):
         entrance_spheres.append(accessed_entrances)
         remaining_entrances -= accessed_entrances
         for location in collected:
-            # Collect the item for the state world it is for
-            area_search.collect(location.item)
+            if location not in auto_locations:
+                # Collect the item for the state world it is for
+                area_search.collect(location.item)
     logger.info('Collected %d area-based spheres', len(area_collection_spheres))
 
     # Reduce each sphere in reverse order, by checking if the game is beatable
     # when we remove the item. We do this to make sure that progressive items
     # like bow and slingshot appear as early as possible rather than as late as possible.
-    required_locations = list(internal_locations)
-    for sphere in reversed(area_collection_spheres):
-        for location in sphere:
+    required_locations = []
+    for s, sphere in enumerate(reversed(area_collection_spheres)):
+        # Do auto locations last; whatever item won the game has to be removed first in its sphere
+        # or Ganons Boss Key (auto) could be removed before Triforce and the search would break
+        for location in sorted(sphere, key=auto_locations.__contains__):
             # we remove the item at location and check if the game is still beatable in case the item could be required
             old_item = location.item
 
@@ -921,10 +928,9 @@ def create_playthrough(spoiler):
             area_search.unvisit(location)
 
             # Generic events might show up or not, as usual, but since we don't
-            # show them in the final output, might as well skip over them. We'll
-            # still need them in the final pass, so make sure to include them.
+            # show them in the final output, might as well skip over them.
+            # We'll still include them in the final sphere generation.
             if location.internal:
-                required_locations.append(location)
                 continue
 
             location.item = None
@@ -961,13 +967,16 @@ def create_playthrough(spoiler):
     entrance_spheres = []
     remaining_entrances = set(required_entrances)
     collected = []
+    # Reduce the list of keys and such
+    key_locations = set(filter(Location.has_area_item, required_locations))
+    auto_locations = internal_locations | key_locations
     while True:
         area_search.checkpoint()
         # Not collecting while the generator runs means we only get one sphere at a time
         # Otherwise, an item we collect could influence later item collection in the same sphere
-        collected.extend(area_search.iter_reachable_locations(required_locations, internal_locations))
+        collected.extend(area_search.iter_reachable_locations(required_locations, auto_locations))
         if not collected:
-            collected.extend(area_search.iter_reachable_locations(required_locations, internal_locations))
+            collected.extend(area_search.iter_reachable_locations(required_locations, auto_locations))
             if not collected:
                 break
         # Gather the new entrances before collecting items.
@@ -977,8 +986,9 @@ def create_playthrough(spoiler):
         entrance_spheres.append(accessed_entrances)
         remaining_entrances -= accessed_entrances
         for location in collected:
-            # Collect the item for the state world it is for
-            area_search.collect(location.item)
+            if location not in auto_locations:
+                # Collect the item for the state world it is for
+                area_search.collect(location.item)
         collected.clear()
     logger.info('Reduced to %d area-based spheres', len(sphere_list))
 

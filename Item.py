@@ -128,12 +128,34 @@ class Item(object):
             return False
         if self.smallkey and self.world.shuffle_smallkeys in ['dungeon', 'vanilla']:
             return False
-        if self.bosskey and not self.name.endswith('(Ganons Castle)') and self.world.shuffle_bosskeys in ['dungeon', 'vanilla']:
-            return False
-        if self.bosskey and self.name.endswith('(Ganons Castle)') and self.world.shuffle_ganon_bosskey in ['dungeon', 'vanilla']:
-            return False
+        if self.bosskey:
+            if self.name.endswith('(Ganons Castle)'):
+                if self.world.shuffle_ganon_bosskey in ['dungeon', 'vanilla']:
+                    return False
+            elif self.world.shuffle_bosskeys in ['dungeon', 'vanilla']:
+                return False
 
         return True
+
+
+    @property
+    def area_item(self):
+        if self.type == 'Token':
+            return self.world.bridge != 'tokens'
+
+        if self.type in ('Drop', 'Shop') or not self.advancement:
+            return True
+        if self.map or self.compass:
+            return True
+        if self.smallkey and self.world.shuffle_smallkeys in ['dungeon', 'vanilla']:
+            return True
+        if self.bosskey:
+            if self.name.endswith('(Ganons Castle)'):
+                if self.world.shuffle_ganon_bosskey in ['dungeon', 'vanilla']:
+                    return True
+            elif self.world.shuffle_bosskeys in ['dungeon', 'vanilla']:
+                return True
+        return False
 
 
     def __str__(self):

@@ -1,6 +1,6 @@
 import copy
 from collections import defaultdict
-import itertools
+from itertools import chain
 import logging
 
 from Region import TimeOfDay, get_region_area_name
@@ -120,7 +120,7 @@ class Search(object):
         # grab all the exits from the regions with the given tod in the same world as our goal.
         # we want those that go to existing regions without the tod, until we reach the goal.
         has_tod_world = lambda regtod: regtod[1] & tod and regtod[0].world == goal_region.world
-        exit_queue = list(itertools.chain.from_iterable(region.exits for region, _ in filter(has_tod_world, regions.items())))
+        exit_queue = list(chain.from_iterable(region.exits for region, _ in filter(has_tod_world, regions.items())))
         for exit in exit_queue:
             # We don't look for new regions, just spreading the tod to our existing regions
             if exit.connected_region in regions and tod & ~regions[exit.connected_region]:
@@ -437,6 +437,8 @@ class AreaFirstSearch(RewindableSearch):
 
 
     # Collects any automatic locations along the way.
+    # Locations in item_locations are yielded by the iterator,
+    # including automatic_locations which are automatically collected!
     def iter_reachable_locations(self, item_locations, automatic_locations=()):
         self.try_age_swap(self.next_sphere())
 
@@ -447,8 +449,9 @@ class AreaFirstSearch(RewindableSearch):
         ages = self._cache['age']
         had_reachable_locations = True
         had_auto_locations = True
+        all_locations = list(chain(automatic_locations, item_locations))
         # will loop as long as any visits were made, and at least once
-        while had_reachable_locations or had_auto_locations:
+        while had_reachable_locations:
             # If we picked up any internal locations, we have to expand areas
             # to avoid switching ages (or not) incorrectly
             if had_auto_locations:
@@ -459,7 +462,7 @@ class AreaFirstSearch(RewindableSearch):
             # Get all locations in accessible_regions that aren't visited,
             # and check if they can be reached. Collect them.
             had_reachable_locations = False
-            for loc in item_locations:
+            for loc in all_locations:
                 if loc in visited_locations:
                     continue
                 if ages[loc.world.id] == 'child':
@@ -470,7 +473,7 @@ class AreaFirstSearch(RewindableSearch):
                         if loc in automatic_locations:
                             had_auto_locations = True
                             self.collect(loc.item)
-                        else:
+                        if loc in item_locations:
                             had_reachable_locations = True
                             self._cache['last'][loc.world.id] = True
                             yield loc
@@ -482,7 +485,7 @@ class AreaFirstSearch(RewindableSearch):
                         if loc in automatic_locations:
                             had_auto_locations = True
                             self.collect(loc.item)
-                        else:
+                        if loc in item_locations:
                             had_reachable_locations = True
                             self._cache['last'][loc.world.id] = True
                             yield loc
@@ -492,7 +495,8 @@ class AreaFirstSearch(RewindableSearch):
         item_locations = item_locations or self.progression_locations()
         for location in self.iter_reachable_locations(item_locations, automatic_locations=automatic_locations):
             # Collect the item for the state world it is for
-            self.collect(location.item)
+            if location not in automatic_locations:
+                self.collect(location.item)
 
 
     def current_ages(self):
