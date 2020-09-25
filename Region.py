@@ -100,7 +100,7 @@ def get_region_area(region):
         for entrance2 in entrance.parent_region.entrances:
             if entrance2.parent_region.hint:
                 return entrance2.parent_region.hint
-    raise RuntimeError('No hint area could be found for %s [World %d]' % (spot, spot.world.id))
+    raise RuntimeError('No hint area could be found for %s [World %d]' % (region, region.world.id))
 
 
 area_name_map = {
