@@ -934,8 +934,9 @@ def create_playthrough(spoiler):
             # An item can only be required if it isn't already obtained or if it's progressive
             if area_search.state_list[old_item.world.id].item_count(old_item.name) < old_item.world.max_progressions[old_item.name]:
                 # Test whether the game is still beatable from here.
-                logger.debug(f'I have {area_search.state_list[old_item.world.id].item_count(old_item.name)} of {old_item.name}; checking if another is required to beat the game.')
-                if not area_search.can_beat_game():
+                fail = not area_search.can_beat_game()
+                logger.debug(f'I have {area_search.state_list[old_item.world.id].item_count(old_item.name)} of {old_item.name}; another {"*is*" if fail else "is *not*"} required to beat the game.')
+                if fail:
                     # still required, so reset the item
                     location.item = old_item
                     required_locations.append(location)
@@ -998,15 +999,18 @@ def create_playthrough(spoiler):
     #logger.info('Merged into %d final area spheres', len(final_area_spheres))
 
     # Generate playthrough spoiler structs
-    spoiler.area_playthrough = OrderedDict((i, {f'World {k} ({age})': {} for k, age in enumerate(sphere.age_list)}) for i, sphere in enumerate(final_area_spheres))
+    spoiler.area_playthrough = OrderedDict((i, {f'World {k + 1} ({age})': {} for k, age in enumerate(sphere.age_list)}) for i, sphere in enumerate(final_area_spheres))
     for i, sphere in enumerate(final_area_spheres):
         for area, locations in sphere.area_map.items():
             for location in locations:
-                w = f'World {location.world.id} ({sphere.age_list[location.world.id]})'
+                w = f'World {location.world.id + 1} ({sphere.age_list[location.world.id]})'
                 if area not in spoiler.area_playthrough[i][w]:
                     spoiler.area_playthrough[i][w][area] = [location]
                 else:
                     spoiler.area_playthrough[i][w][area].append(location)
+        for w in list(spoiler.area_playthrough[i].keys()):
+            if not spoiler.area_playthrough[i][w]:
+                del spoiler.area_playthrough[i][w]
 
     if worlds[0].entrance_shuffle != 'off':
         spoiler.entrance_playthrough = OrderedDict((str(i + 1), list(sphere)) for i, sphere in enumerate(entrance_spheres))

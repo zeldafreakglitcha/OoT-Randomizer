@@ -43,6 +43,9 @@ class Search(object):
         return Search(self.state_list, initial_cache=new_cache)
 
 
+    fast_copy = copy
+
+
     def collect_all(self, itempool):
         for item in itempool:
             self.state_list[item.world.id].collect(item)
@@ -169,7 +172,7 @@ class Search(object):
             # Get all locations in accessible_regions that aren't visited,
             # and check if they can be reached. Collect them.
             had_reachable_locations = False
-            for loc in item_locations:
+            for loc in chain(automatic_locations, item_locations):
                 if loc in visited_locations:
                     continue
                 # Check adult first; it's the most likely.
@@ -178,14 +181,19 @@ class Search(object):
                     had_reachable_locations = True
                     # Mark it visited for this algorithm
                     visited_locations.add(loc)
-                    yield loc
-
+                    if loc in automatic_locations:
+                        self.collect(loc.item)
+                    if loc in item_locations:
+                        yield loc
                 elif (loc.parent_region in child_regions
                       and loc.access_rule(self.state_list[loc.world.id], spot=loc, age='child')):
                     had_reachable_locations = True
                     # Mark it visited for this algorithm
                     visited_locations.add(loc)
-                    yield loc
+                    if loc in automatic_locations:
+                        self.collect(loc.item)
+                    if loc in item_locations:
+                        yield loc
 
 
     # This collects all item locations available in the state list given that
@@ -230,7 +238,7 @@ class Search(object):
         if scan_for_items:
             # collect all available items
             # make a new search since we might be iterating over one already
-            search = self.copy()
+            search = self.fast_copy()
             search.collect_locations()
             # if every state got the Triforce, then return True
             return all(map(State.won, search.state_list))
@@ -328,6 +336,9 @@ class RewindableSearch(Search):
             index = self.cache_level + index
         else:
             index = min(index, self.cache_level)
+        if index >= len(self.cached_spheres) or -index >= len(self.cached_spheres):
+            logging.debug(f"Can't rewind any further than {self.cache_level}: {index}")
+            return index
 
         self._cache = self.cached_spheres[index]
         self.state_list = self._state_cache[index]
@@ -366,6 +377,18 @@ class AreaFirstSearch(RewindableSearch):
     def rewind(self, *args, **kwargs):
         super().rewind(*args, **kwargs)
         self._cache['last'] = [False] * len(self.state_list)
+
+
+    def fast_copy(self):
+        # we only need to copy the top sphere since that's what we're starting with and we don't go back
+        new_cache = {k: copy.copy(v) for k,v in self._cache.items() if not k.endswith('queue')}
+        # To use the base algorithm, we have to reset our exit queues.
+        new_cache.update({
+            'child_queue': list(exit for region in self._cache['child_regions'] for exit in region.exits),
+            'adult_queue': list(exit for region in self._cache['adult_regions'] for exit in region.exits),
+        })
+        # copy always makes a nonreversible instance
+        return Search(self.state_list, initial_cache=new_cache)
 
 
     def _expand_regions_in_areas(self, exit_queue, regions, ages, areas, age):
@@ -495,23 +518,6 @@ class AreaFirstSearch(RewindableSearch):
                         if loc in item_locations:
                             self._cache['last'][loc.world.id] = True
                             yield loc
-
-
-    def collect_locations(self, item_locations=None, automatic_locations=()):
-        item_locations = item_locations or self.progression_locations()
-        had = True
-        retries = 0
-        # Each iter call is locked on a specific age, so we have to call the loop in a loop here
-        while had or retries < 2:
-            had = False
-            for location in self.iter_reachable_locations(item_locations, automatic_locations=automatic_locations):
-                had = True
-                # Collect the item for the state world it is for
-                if location not in automatic_locations:
-                    self.collect(location.item)
-            # Forces age swaps where possible
-            self._cache['last'] = [False] * len(self.state_list)
-            retries = retries + 1 if not had else 0
 
 
     def current_ages(self):
