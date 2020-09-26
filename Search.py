@@ -199,11 +199,12 @@ class Search(object):
     # This collects all item locations available in the state list given that
     # the states have collected items. The purpose is that it will search for
     # all new items that become accessible with a new item set.
-    def collect_locations(self, item_locations=None):
+    def collect_locations(self, item_locations=(), automatic_locations=()):
         item_locations = item_locations or self.progression_locations()
-        for location in self.iter_reachable_locations(item_locations):
-            # Collect the item for the state world it is for
-            self.collect(location.item)
+        for location in self.iter_reachable_locations(item_locations, automatic_locations):
+            if location not in automatic_locations:
+                # Collect the item for the state world it is for
+                self.collect(location.item)
 
     # A shorthand way to iterate over locations without collecting items.
     def visit_locations(self, locations=None):
