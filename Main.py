@@ -916,16 +916,12 @@ def create_playthrough(spoiler):
     # when we remove the item. We do this to make sure that progressive items
     # like bow and slingshot appear as early as possible rather than as late as possible.
     required_locations = []
-    for s, sphere in enumerate(reversed(area_collection_spheres)):
-        # Do auto locations last; whatever item won the game has to be removed first in its sphere
-        # or Ganons Boss Key (auto) could be removed before Triforce and the search would break
-        for location in sorted(sphere, key=auto_locations.__contains__):
+    for sphere in reversed(area_collection_spheres):
+        # Drop everything in the sphere first; auto locations may affect others.
+        area_search.rewind()
+        for location in sphere:
             # we remove the item at location and check if the game is still beatable in case the item could be required
             old_item = location.item
-
-            # Uncollect the item and location.
-            area_search.uncollect(old_item)
-            area_search.unvisit(location)
 
             # Generic events might show up or not, as usual, but since we don't
             # show them in the final output, might as well skip over them.
@@ -938,7 +934,7 @@ def create_playthrough(spoiler):
             # An item can only be required if it isn't already obtained or if it's progressive
             if area_search.state_list[old_item.world.id].item_count(old_item.name) < old_item.world.max_progressions[old_item.name]:
                 # Test whether the game is still beatable from here.
-                logger.debug('Checking if %s is required to beat the game.', old_item.name)
+                logger.debug(f'I have {area_search.state_list[old_item.world.id].item_count(old_item.name)} of {old_item.name}; checking if another is required to beat the game.')
                 if not area_search.can_beat_game():
                     # still required, so reset the item
                     location.item = old_item
@@ -962,7 +958,8 @@ def create_playthrough(spoiler):
                 required_entrances.append(entrance)
 
     # Regenerate the spheres as we might not reach places the same way anymore.
-    area_search.reset() # search state has no items, okay to reuse sphere 0 cache
+    # New search, since deleting entrances may have isolated areas
+    area_search = AreaFirstSearch([world.state for world in worlds])
     sphere_list = []
     entrance_spheres = []
     remaining_entrances = set(required_entrances)
@@ -970,15 +967,19 @@ def create_playthrough(spoiler):
     # Reduce the list of keys and such
     key_locations = set(filter(Location.has_area_item, required_locations))
     auto_locations = internal_locations | key_locations
-    while True:
+    retries = 0
+    while not area_search.can_beat_game(False):
         area_search.checkpoint()
         # Not collecting while the generator runs means we only get one sphere at a time
         # Otherwise, an item we collect could influence later item collection in the same sphere
+        # However, we allow some locations to be collected automatically to accomplish exactly that.
         collected.extend(area_search.iter_reachable_locations(required_locations, auto_locations))
         if not collected:
-            collected.extend(area_search.iter_reachable_locations(required_locations, auto_locations))
-            if not collected:
-                break
+            if retries > 1:
+                raise InvalidPlaythrough(f'Failed to collect required items or win playthrough after {retries} consecutive searches.')
+            retries += 1
+            continue
+        retries = 0
         # Gather the new entrances before collecting items.
         sphere_list.append(Sphere(locations_to_area_map(collected), area_search.current_ages()))
         # Might not be accurate; entrances can be used despite not looting a new area

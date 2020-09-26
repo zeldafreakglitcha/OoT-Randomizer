@@ -1,4 +1,5 @@
 from enum import Enum, unique
+import logging
 
 
 @unique
@@ -100,7 +101,7 @@ def get_region_area(region):
         for entrance2 in entrance.parent_region.entrances:
             if entrance2.parent_region.hint:
                 return entrance2.parent_region.hint
-    raise RuntimeError('No hint area could be found for %s [World %d]' % (region, region.world.id))
+    return None
 
 
 area_name_map = {
