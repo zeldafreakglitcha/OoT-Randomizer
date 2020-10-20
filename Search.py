@@ -10,6 +10,7 @@ class Search(object):
 
     def __init__(self, state_list, initial_cache=None, extra_cache=None):
         self.state_list = [state.copy() for state in state_list]
+        self.debug = False
 
         # Let the states reference this search.
         for state in self.state_list:
@@ -271,6 +272,12 @@ class Search(object):
     def visited(self, location):
         return location in self._cache['visited_locations']
 
+    def visited_all(self, location_set):
+        return location_set <= self._cache['visited_locations']
+
+    def unvisited_locations(self, location_set):
+        return location_set - self._cache['visited_locations']
+
     # Use the cache in the search to get all reachable regions.
     def reachable_regions(self, age=None):
         if age == 'adult':
@@ -333,19 +340,20 @@ class RewindableSearch(Search):
 
 
     def rewind(self, index=-1):
+        """Rewinds to the given cache index, copying it into the current _cache."""
+        # index = -1 means to roll back to the most recent checkpoint, undoing any
+        # non-checkpointed changes.
         if index < 0:
-            index = self.cache_level + index
+            index = self.cache_level + index + 1
         else:
             index = min(index, self.cache_level)
         if index >= len(self.cached_spheres) or -index >= len(self.cached_spheres):
             logging.debug(f"Can't rewind any further than {self.cache_level}: {index}")
             return index
 
-        self._cache = self.cached_spheres[index]
-        self.state_list = self._state_cache[index]
+        self._cache = {k: copy.copy(v) for k, v in self.cached_spheres[index].items()}
+        self.state_list = [state.copy() for state in self._state_cache[index]]
         self.cache_level = index
-        self.cached_spheres[self.cache_level:] = []
-        self._state_cache[self.cache_level:] = []
         return index
 
 
@@ -377,6 +385,11 @@ class AreaFirstSearch(RewindableSearch):
 
     def rewind(self, *args, **kwargs):
         super().rewind(*args, **kwargs)
+        self._cache['last'] = [False] * len(self.state_list)
+
+
+    def checkpoint(self):
+        super().checkpoint()
         self._cache['last'] = [False] * len(self.state_list)
 
 
@@ -425,22 +438,28 @@ class AreaFirstSearch(RewindableSearch):
         return self._cache['child_regions'], self._cache['adult_regions'], self._cache['visited_locations']
 
 
-    def next_sphere(self):
+    def next_sphere(self, world=None):
         # For each world that didn't have anything reachable,
         # try to find a new area to explore. if it is unable to find a new area and has time travel,
         # switch its age.
         # Refill the queues. Don't worry about in-area, that'll be checked elsewhere.
+        # If we're restricting to a particular world, only add that world's exits.
         self._cache.update({
-            'child_queue': list(exit for region in self._cache['child_regions'] for exit in region.exits),
-            'adult_queue': list(exit for region in self._cache['adult_regions'] for exit in region.exits),
+            'child_queue': list(chain.from_iterable(
+                region.exits for region in self._cache['child_regions']
+                if world is None or world == region.world.id)),
+            'adult_queue': list(chain.from_iterable(
+                region.exits for region in self._cache['adult_regions']
+                if world is None or world == region.world.id)),
         })
         # We do this by... just expanding!
         super().next_sphere()
         # then find all worlds with new areas
         world_has_new = [False] * len(self.state_list)
+        # If we locked ages, we might also be able to skip some of these.
         for region in self._cache['child_regions']:
             # skip if we don't care
-            if self._cache['last'][region.world.id]:
+            if self._cache['last'][region.world.id] or (world is not None and world != region.world.id):
                 continue
             if get_region_area_name(region) not in self._cache['child'][region.world.id]:
                 if self._cache['age'][region.world.id] == 'child':
@@ -449,7 +468,7 @@ class AreaFirstSearch(RewindableSearch):
 
         for region in self._cache['adult_regions']:
             # skip if we don't care
-            if self._cache['last'][region.world.id]:
+            if self._cache['last'][region.world.id] or (world is not None and world != region.world.id):
                 continue
             if get_region_area_name(region) not in self._cache['adult'][region.world.id]:
                 if self._cache['age'][region.world.id] == 'adult':
@@ -459,21 +478,34 @@ class AreaFirstSearch(RewindableSearch):
         return world_has_new
 
 
-    def try_age_swap(self, world_has_new):
-        # Switches age for any world that didn't add new areas in its current age
-        for i in range(len(self.state_list)):
-            if not self._cache['last'][i] and not world_has_new[i] and self.state_list[i].has('Time Travel'):
-                self._cache['age'][i] = 'adult' if self._cache['age'][i] == 'child' else 'child'
+    def try_age_swap(self, world_has_new, world=None):
+        # Switches age for any world that didn't add new areas or collect items in its current age
+        if world is not None:
+            if not self._cache['last'][world] and not world_has_new[world] and self.state_list[world].has('Time Travel'):
+                self._cache['age'][world] = 'adult' if self._cache['age'][world] == 'child' else 'child'
+        else:
+            for i in range(len(self.state_list)):
+                if not self._cache['last'][i] and not world_has_new[i] and self.state_list[i].has('Time Travel'):
+                    self._cache['age'][i] = 'adult' if self._cache['age'][i] == 'child' else 'child'
+
+
+    def force_age_swap(self, worlds_to_swap):
+        for world in worlds_to_swap:
+            if self.state_list[world].has('Time Travel'):
+                self._cache['age'][world] = 'adult' if self._cache['age'][world] == 'child' else 'child'
+            else:
+                logging.error(f"Can't swap ages in world {world} without Time Travel!")
 
 
     # Collects any automatic locations along the way.
     # Locations in item_locations are yielded by the iterator,
     # including automatic_locations which are automatically collected!
-    def iter_reachable_locations(self, item_locations, automatic_locations=()):
-        self.try_age_swap(self.next_sphere())
+    def iter_reachable_locations(self, *args, world=None, **kwargs):
+        self.try_age_swap(self.next_sphere(world=world), world=world)
+        return self.iter_locations_lock_ages(*args, world=world, **kwargs)
 
-        self._cache['last'] = [False] * len(self.state_list)
 
+    def iter_locations_lock_ages(self, item_locations, automatic_locations=(), world=None):
         child_areas = self._cache['child']
         adult_areas = self._cache['adult']
         ages = self._cache['age']
@@ -485,7 +517,7 @@ class AreaFirstSearch(RewindableSearch):
             # If we picked up any internal locations, we have to expand areas
             # to avoid switching ages (or not) incorrectly
             if had_auto_locations:
-                self.next_sphere()
+                self.next_sphere(world=world)
                 had_auto_locations = False
             child_regions, adult_regions, visited_locations = self.next_in_area()
 
@@ -493,7 +525,7 @@ class AreaFirstSearch(RewindableSearch):
             # and check if they can be reached. Collect them.
             had_reachable_locations = False
             for loc in all_locations:
-                if loc in visited_locations:
+                if loc in visited_locations or (world is not None and world != loc.world.id):
                     continue
                 if ages[loc.world.id] == 'child':
                     if (get_region_area_name(loc.parent_region) in child_areas[loc.world.id]
@@ -521,5 +553,21 @@ class AreaFirstSearch(RewindableSearch):
                             yield loc
 
 
+    def collect_locations_lock_ages(self, item_locations=(), automatic_locations=(), world=None):
+        item_locations = item_locations or self.progression_locations()
+        for location in self.iter_locations_lock_ages(item_locations, automatic_locations, world=world):
+            if location not in automatic_locations:
+                # Collect the item for the state world it is for
+                self.collect(location.item)
+
+
+    def set_ages(self, ages):
+        self._cache['age'] = ages
+
+
     def current_ages(self):
         return tuple(self._cache['age'])
+
+
+    def cached_ages(self, low, high):
+        return tuple(list(s['age']) for s in self.cached_spheres[low:high+1])
