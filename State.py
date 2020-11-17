@@ -41,7 +41,7 @@ class State(object):
 
 
     def won_triforce_hunt(self):
-        return self.has('Triforce Piece', self.world.triforce_count)
+        return self.has('Triforce Piece', self.world.triforce_goal)
 
 
     def won_normal(self):
