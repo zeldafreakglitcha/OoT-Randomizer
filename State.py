@@ -98,6 +98,28 @@ class State(object):
         return (self.count_of(ItemInfo.medallions) + self.count_of(ItemInfo.stones)) >= count
 
 
+    def get_opportunity_progress(self):
+        progress = {}
+
+        if self.world.triforce_hunt and self.world.triforce_goal < self.world.triforce_count and self.world.triforce_goal > 0:
+            progress['Triforce Piece'] = self.item_count('Triforce Piece')
+
+        if ((self.world.bridge == 'stones' and self.world.bridge_stones < 3 and self.world.bridge_stones > 0) or 
+           (self.world.lacs_condition == 'stones' and self.world.lacs_stones < 3 and self.world.lacs_stones > 0)):
+                progress['Stones'] = self.count_of(ItemInfo.stones)
+        if ((self.world.bridge == 'medallions' and self.world.bridge_medallions < 6 and self.world.bridge_medallions > 0) or 
+           (self.world.lacs_condition == 'medallions' and self.world.lacs_medallions < 6 and self.world.lacs_medallions > 0)):
+                progress['Medallions'] = self.count_of(ItemInfo.medallions)
+        if ((self.world.bridge == 'dungeons' and self.world.bridge_rewards < 9 and self.world.bridge_rewards > 0) or 
+           (self.world.lacs_condition == 'dungeons' and self.world.lacs_rewards < 9 and self.world.lacs_rewards > 0)):
+                progress['Dungeons'] = self.count_of(ItemInfo.stones) + self.count_of(ItemInfo.medallions)
+        if ((self.world.bridge == 'tokens' and self.world.bridge_tokens < 100 and self.world.bridge_tokens > 0) or 
+           (self.world.lacs_condition == 'tokens' and self.world.lacs_tokens < 100 and self.world.lacs_tokens > 0)):
+                progress['Gold Skulltula Token'] = self.count_of('Gold Skulltula Token')
+        
+        return progress
+
+
     def had_night_start(self):
         stod = self.world.starting_tod
         # These are all not between 6:30 and 18:00

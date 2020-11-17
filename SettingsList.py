@@ -2137,7 +2137,7 @@ setting_infos = [
         gui_text       = 'Triforces Per World',
         default        = 30,
         min            = 1,
-        max            = 200,
+        max            = 100,
         shared         = True,
         gui_tooltip    = '''\
             Select the amount of Triforce Pieces placed in each world.

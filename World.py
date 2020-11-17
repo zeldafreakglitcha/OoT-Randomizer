@@ -32,6 +32,7 @@ class World(object):
         self._region_cache = {}
         self._location_cache = {}
         self.required_locations = []
+        self.opportunity_locations = []
         self.shop_prices = {}
         self.scrub_prices = {}
         self.maximum_wallets = 0
