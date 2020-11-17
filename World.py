@@ -65,6 +65,8 @@ class World(object):
                                              self.warp_songs or self.spawn_positions):
             self.open_forest = 'closed_deku'
 
+        if self.triforce_goal_per_world > self.triforce_count_per_world:
+            raise ValueError("Triforces required cannot be more than the triforce count.")
         self.triforce_goal = self.triforce_goal_per_world * settings.world_count
 
         if self.triforce_hunt:
