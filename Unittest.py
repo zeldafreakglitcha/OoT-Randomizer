@@ -9,8 +9,8 @@ import unittest
 
 from ItemList import item_table
 from ItemPool import remove_junk_items, item_groups
-from LocationList import location_groups
-from Main import main
+from LocationList import location_groups, location_is_viewable
+from Main import main, resolve_settings, build_world_graphs
 from Settings import Settings
 
 test_dir = os.path.join(os.path.dirname(__file__), 'tests')
@@ -25,7 +25,7 @@ never_prefix = ['Bombs', 'Arrows', 'Rupee', 'Deku Seeds', 'Map', 'Compass']
 never_suffix = ['Capacity']
 never = {
     'Bunny Hood', 'Recovery Heart', 'Milk', 'Ice Arrows', 'Ice Trap',
-    'Double Defense', 'Biggoron Sword',
+    'Double Defense', 'Biggoron Sword', 'Giants Knife',
 } | {item for item, (t, adv, _, special) in item_table.items() if adv is False
      or any(map(item.startswith, never_prefix)) or any(map(item.endswith, never_suffix))}
 
@@ -81,7 +81,7 @@ def load_spoiler(json_file):
         return json.load(f)
 
 
-def generate_with_plandomizer(filename):
+def generate_with_plandomizer(filename, live_copy=False):
     distribution_file = load_spoiler(os.path.join(test_dir, 'plando', filename + '.json'))
     try:
         settings = load_settings(distribution_file['settings'], seed='TESTTESTTEST', filename=filename)
@@ -95,8 +95,9 @@ def generate_with_plandomizer(filename):
             'output_file': os.path.join(test_dir, 'Output', filename),
             'seed': 'TESTTESTTEST'
         })
-    main(settings)
-    spoiler = load_spoiler('%s_Spoiler.json' % settings.output_file)
+    spoiler = main(settings)
+    if not live_copy:
+        spoiler = load_spoiler('%s_Spoiler.json' % settings.output_file)
     return distribution_file, spoiler
 
 
@@ -201,9 +202,9 @@ class TestPlandomizer(unittest.TestCase):
         for filename in filenames:
             with self.subTest(filename):
                 distribution_file, spoiler = generate_with_plandomizer(filename)
-                locations_with_previews = location_groups['CanSee']
-                for location in locations_with_previews:
-                    if location in spoiler['locations']:
+                csmc = spoiler['settings'].get('correct_chest_sizes')
+                for location in spoiler['locations']:
+                    if location_is_viewable(location, csmc):
                         item = spoiler['locations'][location]
                         if isinstance(item, dict):
                             if item['item'] == "Ice Trap":
@@ -232,7 +233,9 @@ class TestPlandomizer(unittest.TestCase):
             "plando-num-adult-trade-item-good",
             "plando-num-weird-egg-item-good",
             "plando-num-bottles-fountain-closed-good",
-            "plando-num-bottles-fountain-open-good"
+            "plando-num-bottles-fountain-open-good",
+            "plando-change-triforce-piece-count",
+            "plando-use-normal-triforce-piece-count"
         ]
         for filename in filenames:
             with self.subTest(filename):
@@ -253,7 +256,9 @@ class TestPlandomizer(unittest.TestCase):
         filenames = [
             "empty",
             "plando-list",
-            "plando-item-pool-matches-items-placed-after-starting-items-replaced"
+            "plando-item-pool-matches-items-placed-after-starting-items-replaced",
+            "plando-change-triforce-piece-count",
+            "plando-use-normal-triforce-piece-count",
         ]
         for filename in filenames:
             with self.subTest(filename + " pool accuracy"):
@@ -273,6 +278,28 @@ class TestPlandomizer(unittest.TestCase):
             actual_pool = get_actual_pool(spoiler)
             for item in distribution_file['starting_items']:
                 self.assertNotIn(item, actual_pool)
+
+
+class TestHints(unittest.TestCase):
+    def test_skip_zelda(self):
+        # Song from Impa would be WotH, but instead of relying on random chance to get HC WotH,
+        # just exclude all other locations to see if HC is barren.
+        _, spoiler = generate_with_plandomizer("skip-zelda")
+        woth = spoiler[':barren_regions']
+        self.assertIn('Hyrule Castle', woth)
+
+    def test_ganondorf(self):
+        filenames = [
+            "light-arrows-1",
+            "light-arrows-2",
+            "light-arrows-3",
+        ]
+        # Ganondorf should never hint LAs locked behind LAs
+        for filename in filenames:
+            with self.subTest(filename):
+                _, spoiler = generate_with_plandomizer(filename, live_copy=True)
+                self.assertIsNotNone(spoiler.worlds[0].light_arrow_location)
+                self.assertNotEqual('Ganons Tower Boss Key Chest', spoiler.worlds[0].light_arrow_location.name)
 
 
 class TestValidSpoilers(unittest.TestCase):
@@ -419,7 +446,7 @@ class TestValidSpoilers(unittest.TestCase):
             settings_file = '%s_%s_Settings.json' % (settings.output_file, settings.seed)
             with self.subTest(out=output_file, settings=settings_file):
                 try:
-                    main(settings)
+                    main(settings, max_attempts=2)
                     spoiler = load_spoiler(output_file)
                     self.verify_woth(spoiler)
                     self.verify_playthrough(spoiler)
@@ -429,5 +456,6 @@ class TestValidSpoilers(unittest.TestCase):
                     with open(settings_file, 'w') as f:
                         d = {k: settings.__dict__[k] for k in out_keys}
                         json.dump(d, f, indent=0)
+                    logging.getLogger('').exception(f'Failed to generate with these settings:\n{settings.get_settings_display()}\n')
                     raise
 

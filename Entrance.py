@@ -17,6 +17,8 @@ class Entrance(object):
         self.shuffled = False
         self.data = None
         self.primary = False
+        self.always = False
+        self.never = False
 
 
     def copy(self, new_region):
@@ -31,11 +33,19 @@ class Entrance(object):
         new_entrance.shuffled = self.shuffled
         new_entrance.data = self.data
         new_entrance.primary = self.primary
+        new_entrance.always = self.always
+        new_entrance.never = self.never
 
         return new_entrance
 
 
     def add_rule(self, lambda_rule):
+        if self.always:
+            self.set_rule(lambda_rule)
+            self.always = False
+            return
+        if self.never:
+            return
         self.access_rules.append(lambda_rule)
         self.access_rule = lambda state, **kwargs: all(rule(state, **kwargs) for rule in self.access_rules)
 
@@ -57,21 +67,25 @@ class Entrance(object):
         return previously_connected
 
 
-    def assume_reachable(self):
-        if self.assumed == None:
-            target_region = self.disconnect()
-            root = self.world.get_region('Root Exits')
-            assumed_entrance = Entrance('Root -> ' + target_region.name, root)
-            assumed_entrance.connect(target_region)
-            assumed_entrance.replaces = self
-            root.exits.append(assumed_entrance)
-            self.assumed = assumed_entrance
-        return self.assumed
-
-
     def bind_two_way(self, other_entrance):
         self.reverse = other_entrance
         other_entrance.reverse = self
+
+
+    def get_new_target(self):
+        root = self.world.get_region('Root Exits')
+        target_entrance = Entrance('Root -> ' + self.connected_region.name, root)
+        target_entrance.connect(self.connected_region)
+        target_entrance.replaces = self
+        root.exits.append(target_entrance)
+        return target_entrance
+
+
+    def assume_reachable(self):
+        if self.assumed == None:
+            self.assumed = self.get_new_target()
+            self.disconnect()
+        return self.assumed
 
 
     def __str__(self):

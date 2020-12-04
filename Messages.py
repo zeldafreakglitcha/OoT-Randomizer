@@ -3,13 +3,19 @@
 import random
 from TextBox import line_wrap
 
-TABLE_START = 0xB849EC
 TEXT_START = 0x92D000
-
-TABLE_SIZE_LIMIT = 0x43A8
 ENG_TEXT_SIZE_LIMIT = 0x39000
 JPN_TEXT_SIZE_LIMIT = 0x3A150
 
+JPN_TABLE_START = 0xB808AC
+ENG_TABLE_START = 0xB849EC
+CREDITS_TABLE_START = 0xB88C0C
+
+JPN_TABLE_SIZE = ENG_TABLE_START - JPN_TABLE_START
+ENG_TABLE_SIZE = CREDITS_TABLE_START - ENG_TABLE_START
+
+EXTENDED_TABLE_START = JPN_TABLE_START # start writing entries to the jp table instead of english for more space
+EXTENDED_TABLE_SIZE = JPN_TABLE_SIZE + ENG_TABLE_SIZE # 0x8360 bytes, 4204 entries
 
 # name of type, followed by number of additional bytes to read, follwed by a function that prints the code
 CONTROL_CODES = {
@@ -253,6 +259,8 @@ MISC_MESSAGES = {
             b"holding some kind of \x05\x41treasure\x05\x40!\x02"
             ), None),
     0x0422: ("They say that once \x05\x41Morpha's Curse\x05\x40\x01is lifted, striking \x05\x42this stone\x05\x40 can\x01shift the tides of \x05\x44Lake Hylia\x05\x40.\x02", 0x23),
+    0x401C: ("Please find my dear \05\x41Princess Ruto\x05\x40\x01immediately... Zora!\x12\x68\x7A", 0x23),
+    0x9100: ("I am out of goods now.\x01Sorry!\x04The mark that will lead you to\x01the Spirit Temple is the \x05\x41flag on\x01the left \x05\x40outside the shop.\x01Be seeing you!\x02", 0x00)
 }
 
 
@@ -469,8 +477,13 @@ class Message():
             elif speed_up_text and code.code in slows_text:
                 pass
             elif speed_up_text and code.code in box_breaks:
-                if self.id == 0x605A: #special case for twinrova text
+                # some special cases for text that needs to be on a timer
+                if (self.id == 0x605A or  # twinrova transformation
+                    self.id == 0x706C or  # raru ending text
+                    self.id == 0x70DD or  # ganondorf ending text
+                    self.id == 0x7070):   # zelda ending text
                     text_codes.append(code)
+                    text_codes.append(Text_Code(0x08, 0)) # allow instant
                 else:
                     text_codes.append(Text_Code(0x04, 0)) # un-delayed break
                     text_codes.append(Text_Code(0x08, 0)) # allow instant
@@ -496,7 +509,7 @@ class Message():
         offset_bytes = int_to_bytes(offset, 3)
         entry = id_bytes + bytes([self.opts, 0x00, 0x07]) + offset_bytes
         # write it back
-        entry_offset = TABLE_START + 8 * index
+        entry_offset = EXTENDED_TABLE_START + 8 * index
         rom.write_bytes(entry_offset, entry)
 
         for code in self.text_codes:
@@ -535,7 +548,7 @@ class Message():
     @classmethod
     def from_rom(cls, rom, index):
 
-        entry_offset = TABLE_START + 8 * index
+        entry_offset = ENG_TABLE_START + 8 * index
         entry = rom.read_bytes(entry_offset, 8)
         next = rom.read_bytes(entry_offset + 8, 8)
 
@@ -788,7 +801,7 @@ def add_item_messages(messages, shop_items, world):
 
 # reads each of the game's messages into a list of Message objects
 def read_messages(rom):
-    table_offset = TABLE_START
+    table_offset = ENG_TABLE_START
     index = 0
     messages = []
     while True:
@@ -842,12 +855,12 @@ def repack_messages(rom, messages, permutation=None, always_allow_skip=True, spe
     # end the table
     table_index = len(messages)
     entry = bytes([0xFF, 0xFD, 0x00, 0x00, 0x07]) + int_to_bytes(offset, 3)
-    entry_offset = TABLE_START + 8 * table_index
+    entry_offset = EXTENDED_TABLE_START + 8 * table_index
     rom.write_bytes(entry_offset, entry)
     table_index += 1
-    entry_offset = TABLE_START + 8 * table_index
-    if 8 * (table_index + 1) > TABLE_SIZE_LIMIT:
-        raise(TypeError("Message ID table is too large: 0x" + "{:x}".format(8 * (table_index + 1)) + " written / 0x" + "{:x}".format(TABLE_SIZE_LIMIT) + " allowed."))
+    entry_offset = EXTENDED_TABLE_START + 8 * table_index
+    if 8 * (table_index + 1) > EXTENDED_TABLE_SIZE:
+        raise(TypeError("Message ID table is too large: 0x" + "{:x}".format(8 * (table_index + 1)) + " written / 0x" + "{:x}".format(EXTENDED_TABLE_SIZE) + " allowed."))
     rom.write_bytes(entry_offset, [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 
 # shuffles the messages in the game, making sure to keep various message types in their own group
@@ -860,9 +873,13 @@ def shuffle_messages(messages, except_hints=True, always_allow_skip=True):
             GOSSIP_STONE_MESSAGES + TEMPLE_HINTS_MESSAGES + LIGHT_ARROW_HINT +
             list(KEYSANITY_MESSAGES.keys()) + shuffle_messages.shop_item_messages
         )
+        shuffle_exempt = [
+            0x208D,         # "One more lap!" for Cow in House race.
+        ]
         is_hint = (except_hints and m.id in hint_ids)
         is_error_message = (m.id == ERROR_MESSAGE)
-        return (is_hint or is_error_message or m.is_id_message())
+        is_shuffle_exempt = (m.id in shuffle_exempt)
+        return (is_hint or is_error_message or m.is_id_message() or is_shuffle_exempt)
 
     have_goto         = list( filter(lambda m: not is_exempt(m) and m.has_goto,         messages) )
     have_keep_open    = list( filter(lambda m: not is_exempt(m) and m.has_keep_open,    messages) )

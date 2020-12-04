@@ -2,9 +2,9 @@
 .relativeinclude on
 
 // version guard, prevent people from building with older armips versions
-.if (version() < 101)
+.if (version() < 110)
 .notice version()
-.error   "Detected armips build is too old. Please install https://github.com/Kingcom/armips from HEAD, then locally remove this notice, or increase the ARMIPS_VERSION_REVISION in armips and rebuild to bypass this notice."
+.error   "Detected armips build is too old. Please install https://github.com/Kingcom/armips version 0.11 or later."
 .endif
 
 .create "../roms/patched.z64", 0
@@ -55,7 +55,7 @@ RANDO_CONTEXT:
 .include "time_travel.asm"
 .include "song_fix.asm"
 .include "scarecrow.asm"
-.include "empty_bomb_fix.asm"
+.include "empty_bomb.asm"
 .include "initial_save.asm"
 .include "textbox.asm"
 .include "fishing.asm"
@@ -70,7 +70,7 @@ RANDO_CONTEXT:
 .include "dpad.asm"
 .include "chests.asm"
 .include "bunny_hood.asm"
-.include "magic_color.asm"
+.include "colors.asm"
 .include "debug.asm"
 .include "extended_objects.asm"
 .include "cow.asm"
@@ -83,7 +83,20 @@ RANDO_CONTEXT:
 .include "deku_mouth_condition.asm"
 .include "audio.asm"
 .include "king_zora.asm"
+.include "carpenter_boss.asm"
+.include "twinrova_wait.asm"
+.include "boomerang.asm"
+.include "file_select.asm"
+.include "zelda.asm"
+.include "link_anim.asm"
+.include "malon_hooks.asm"
+.include "bigocto.asm"
 .include "agony.asm"
+.include "horseback_archery.asm"
+.include "items_as_adult.asm"
+.include "carpet_salesman.asm"
+.include "medigoron.asm"
+.include "misc_colors.asm"
 
 .align 0x10
 .importobj "../build/bundle.o"

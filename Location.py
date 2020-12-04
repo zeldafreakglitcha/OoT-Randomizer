@@ -1,4 +1,4 @@
-from LocationList import location_table
+from LocationList import location_table, location_is_viewable
 from Region import TimeOfDay
 from enum import Enum
 
@@ -24,6 +24,8 @@ class Location(object):
         self.minor_only = False
         self.world = None
         self.disabled = DisableType.ENABLED
+        self.always = False
+        self.never = False
         if filter_tags is None:
             self.filter_tags = None
         else:
@@ -43,11 +45,19 @@ class Location(object):
         new_location.internal = self.internal
         new_location.minor_only = self.minor_only
         new_location.disabled = self.disabled
+        new_location.always = self.always
+        new_location.never = self.never
 
         return new_location
 
 
     def add_rule(self, lambda_rule):
+        if self.always:
+            self.set_rule(lambda_rule)
+            self.always = False
+            return
+        if self.never:
+            return
         self.access_rules.append(lambda_rule)
         self.access_rule = lambda state, **kwargs: all(rule(state, **kwargs) for rule in self.access_rules)
 
@@ -78,13 +88,7 @@ class Location(object):
     # Can the player see what's placed at this location without collecting it?
     # Used to reduce JSON spoiler noise
     def has_preview(self):
-        if self.type in ('Collectable', 'BossHeart', 'GS Token', 'Shop'):
-            return True
-        if self.type == 'Chest':
-            return self.scene == 0x10 or self.world.correct_chest_sizes  # Treasure Chest Game Prize or CSMC
-        if self.type == 'NPC':
-            return self.scene in (0x4B, 0x51, 0x57) # Bombchu Bowling, Hyrule Field (OoT), Lake Hylia (RL/FA)
-        return False
+        return location_is_viewable(self.name, self.world.correct_chest_sizes)
 
 
     def has_item(self):

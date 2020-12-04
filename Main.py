@@ -1,19 +1,20 @@
 from collections import OrderedDict
+import copy
+import hashlib
+import io
+import itertools
 import logging
+import os, os.path
 import platform
 import random
+import shutil
 import subprocess
-import time
-import os, os.path
 import sys
 import struct
+import time
 import zipfile
-import io
-import hashlib
-import copy
 
 from World import World
-from State import State
 from Spoiler import Spoiler
 from Rom import Rom
 from Patches import patch_rom
@@ -43,10 +44,30 @@ class dummy_window():
         pass
 
 
-def main(settings, window=dummy_window()):
-
+def main(settings, window=dummy_window(), max_attempts=10):
+    logger = logging.getLogger('')
     start = time.process_time()
 
+    rom = resolve_settings(settings, window=window)
+
+    max_attempts = max(max_attempts, 1)
+    for attempt in range(1, max_attempts + 1):
+        try:
+            spoiler = generate(settings, window=window)
+            break
+        except ShuffleError as e:
+            logger.warning('Failed attempt %d of %d: %s', attempt, max_attempts, e)
+            if attempt >= max_attempts:
+                raise
+            else:
+                logger.info('Retrying...\n\n')
+            settings.reset_distribution()
+    patch_and_output(settings, window, spoiler, rom)
+    logger.debug('Total Time: %s', time.process_time() - start)
+    return spoiler
+
+
+def resolve_settings(settings, window=dummy_window()):
     logger = logging.getLogger('')
 
     old_tricks = settings.allowed_tricks
@@ -64,7 +85,7 @@ def main(settings, window=dummy_window()):
     if settings.compress_rom == 'None' and not settings.create_spoiler:
         raise Exception('`No Output` must have spoiler enabled to produce anything.')
 
-    if settings.compress_rom != 'None':
+    if settings.compress_rom not in ['None', 'Temp']:
         window.update_status('Loading ROM')
         rom = Rom(settings.rom)
     else:
@@ -79,7 +100,7 @@ def main(settings, window=dummy_window()):
     if settings.player_num < 1:
         raise Exception(f'Invalid player num: {settings.player_num}; must be between (1, {settings.world_count})')
     if settings.player_num > settings.world_count:
-        if settings.compress_rom not in ['None', 'Patch']:
+        if settings.compress_rom not in ['None', 'Patch', 'Temp']:
             raise Exception(f'Player Num is {settings.player_num}; must be between (1, {settings.world_count})')
         settings.player_num = settings.world_count
 
@@ -89,21 +110,16 @@ def main(settings, window=dummy_window()):
     random.seed(settings.numeric_seed)
     settings.resolve_random_settings(cosmetic=False)
     logger.debug(settings.get_settings_display())
-    max_attempts = 1
-    for attempt in range(1, max_attempts + 1):
-        try:
-            spoiler = generate(settings, window)
-            break
-        except ShuffleError as e:
-            logger.warning('Failed attempt %d of %d: %s', attempt, max_attempts, e)
-            if attempt >= max_attempts:
-                raise
-            else:
-                logger.info('Retrying...\n\n')
-    return patch_and_output(settings, window, spoiler, rom, start)
+    return rom
 
 
-def generate(settings, window):
+def generate(settings, window=dummy_window()):
+    worlds = build_world_graphs(settings, window=window)
+    place_items(settings, worlds, window=window)
+    return make_spoiler(settings, worlds, window=window)
+
+
+def build_world_graphs(settings, window=dummy_window()):
     logger = logging.getLogger('')
     worlds = []
     for i in range(0, settings.world_count):
@@ -146,12 +162,19 @@ def generate(settings, window):
 
     logger.info('Setting Entrances.')
     set_entrances(worlds)
+    return worlds
 
+
+def place_items(settings, worlds, window=dummy_window()):
+    logger = logging.getLogger('')
     window.update_status('Placing the Items')
     logger.info('Fill the world.')
     distribute_items_restrictive(window, worlds)
     window.update_progress(35)
 
+
+def make_spoiler(settings, worlds, window=dummy_window()):
+    logger = logging.getLogger('')
     spoiler = Spoiler(worlds)
     if settings.create_spoiler:
         window.update_status('Calculating Spoiler Data')
@@ -161,14 +184,17 @@ def generate(settings, window):
     if settings.create_spoiler or settings.hints != 'none':
         window.update_status('Calculating Hint Data')
         logger.info('Calculating hint data.')
-        State.update_required_items(spoiler)
+        update_required_items(spoiler)
         buildGossipHints(spoiler, worlds)
         window.update_progress(55)
+    else:
+        # Ganon may still provide the Light Arrows hint
+        find_light_arrows(spoiler)
     spoiler.build_file_hash()
     return spoiler
 
 
-def patch_and_output(settings, window, spoiler, rom, start):
+def patch_and_output(settings, window, spoiler, rom):
     logger = logging.getLogger('')
     logger.info('Patching ROM.')
     worlds = spoiler.worlds
@@ -213,9 +239,9 @@ def patch_and_output(settings, window, spoiler, rom, start):
             if settings.create_cosmetics_log and cosmetics_log:
                 window.update_status('Creating Cosmetics Log')
                 if settings.world_count > 1:
-                    cosmetics_log_filename = "%sP%d_Cosmetics.txt" % (outfilebase, world.id + 1)
+                    cosmetics_log_filename = "%sP%d_Cosmetics.json" % (outfilebase, world.id + 1)
                 else:
-                    cosmetics_log_filename = '%s_Cosmetics.txt' % outfilebase
+                    cosmetics_log_filename = '%s_Cosmetics.json' % outfilebase
                 cosmetics_log.to_file(os.path.join(output_dir, cosmetics_log_filename))
                 file_list.append(cosmetics_log_filename)
             cosmetics_log = None
@@ -232,7 +258,7 @@ def patch_and_output(settings, window, spoiler, rom, start):
         logger.info("Created patchfile at: %s" % output_path)
         window.update_progress(95)
 
-    elif settings.compress_rom != 'None':
+    elif settings.compress_rom not in ['None', 'Temp']:
         window.update_status('Patching ROM')
         patch_rom(spoiler, worlds[settings.player_num - 1], rom)
         cosmetics_log = patch_cosmetics(settings, rom)
@@ -295,22 +321,28 @@ def patch_and_output(settings, window, spoiler, rom, start):
     if settings.create_cosmetics_log and cosmetics_log:
         window.update_status('Creating Cosmetics Log')
         if settings.world_count > 1 and not settings.output_file:
-            filename = "%sP%d_Cosmetics.txt" % (outfilebase, settings.player_num)
+            filename = "%sP%d_Cosmetics.json" % (outfilebase, settings.player_num)
         else:
-            filename = '%s_Cosmetics.txt' % outfilebase
+            filename = '%s_Cosmetics.json' % outfilebase
         cosmetic_path = os.path.join(output_dir, filename)
         cosmetics_log.to_file(cosmetic_path)
         logger.info("Created cosmetic log at: %s" % cosmetic_path)
 
+    if settings.enable_distribution_file:
+        window.update_status('Copying Distribution File')
+        try:
+            filename = os.path.join(output_dir, '%s_Distribution.json' % outfilebase)
+            shutil.copyfile(settings.distribution_file, filename)
+            logger.info("Copied distribution file to: %s" % filename)
+        except:
+            logger.info('Distribution file copy failed.')
+
     window.update_progress(100)
-    if cosmetics_log and cosmetics_log.error:
+    if cosmetics_log and cosmetics_log.errors:
         window.update_status('Success: Rom patched successfully. Some cosmetics could not be applied.')
     else:
         window.update_status('Success: Rom patched successfully')
     logger.info('Done. Enjoy.')
-    logger.debug('Total Time: %s', time.process_time() - start)
-
-    return worlds[settings.player_num - 1]
 
 
 def from_patch_file(settings, window=dummy_window()):
@@ -318,7 +350,7 @@ def from_patch_file(settings, window=dummy_window()):
     logger = logging.getLogger('')
 
     # we load the rom before creating the seed so that error get caught early
-    if settings.compress_rom == 'None' or settings.compress_rom == 'Patch':
+    if settings.compress_rom in ['None', 'Patch', 'Temp']:
         raise Exception('Output Type must be a ROM when patching from a patch file.')
     window.update_status('Loading ROM')
     rom = Rom(settings.rom)
@@ -388,15 +420,15 @@ def from_patch_file(settings, window=dummy_window()):
     if settings.create_cosmetics_log and cosmetics_log:
         window.update_status('Creating Cosmetics Log')
         if settings.world_count > 1 and not settings.output_file:
-            filename = "%sP%d_Cosmetics.txt" % (outfilebase, settings.player_num)
+            filename = "%sP%d_Cosmetics.json" % (outfilebase, settings.player_num)
         else:
-            filename = '%s_Cosmetics.txt' % outfilebase
+            filename = '%s_Cosmetics.json' % outfilebase
         cosmetic_path = os.path.join(output_dir, filename)
         cosmetics_log.to_file(cosmetic_path)
         logger.info("Created cosmetic log at: %s" % cosmetic_path)
 
     window.update_progress(100)
-    if cosmetics_log and cosmetics_log.error:
+    if cosmetics_log and cosmetics_log.errors:
         window.update_status('Success: Rom patched successfully. Some cosmetics could not be applied.')
     else:
         window.update_status('Success: Rom patched successfully')
@@ -462,15 +494,15 @@ def cosmetic_patch(settings, window=dummy_window()):
     if settings.create_cosmetics_log and cosmetics_log:
         window.update_status('Creating Cosmetics Log')
         if settings.world_count > 1 and not settings.output_file:
-            filename = "%sP%d_Cosmetics.txt" % (outfilebase, settings.player_num)
+            filename = "%sP%d_Cosmetics.json" % (outfilebase, settings.player_num)
         else:
-            filename = '%s_Cosmetics.txt' % outfilebase
+            filename = '%s_Cosmetics.json' % outfilebase
         cosmetic_path = os.path.join(output_dir, filename)
         cosmetics_log.to_file(cosmetic_path)
         logger.info("Created cosmetic log at: %s" % cosmetic_path)
 
     window.update_progress(100)
-    if cosmetics_log and cosmetics_log.error:
+    if cosmetics_log and cosmetics_log.errors:
         window.update_status('Success: Rom patched successfully. Some cosmetics could not be applied.')
     else:
         window.update_status('Success: Rom patched successfully')
@@ -504,16 +536,76 @@ def copy_worlds(worlds):
     return worlds
 
 
+def maybe_set_light_arrows(location):
+    if not location.item.world.light_arrow_location and location.item and location.item.name == 'Light Arrows':
+        location.item.world.light_arrow_location = location
+        logging.getLogger('').debug(f'Light Arrows [{location.item.world.id}] set to [{location.name}]')
+
+
+def find_light_arrows(spoiler):
+    search = Search([world.state for world in spoiler.worlds])
+    for location in search.iter_reachable_locations(search.progression_locations()):
+        search.collect(location.item)
+        maybe_set_light_arrows(location)
+
+
+def update_required_items(spoiler):
+    worlds = spoiler.worlds
+
+    # get list of all of the progressive items that can appear in hints
+    # all_locations: all progressive items. have to collect from these
+    # item_locations: only the ones that should appear as "required"/WotH
+    all_locations = [location for world in worlds for location in world.get_filled_locations()]
+    # Set to test inclusion against
+    item_locations = {location for location in all_locations if location.item.majoritem and not location.locked and location.item.name != 'Triforce Piece'}
+
+    # if the playthrough was generated, filter the list of locations to the
+    # locations in the playthrough. The required locations is a subset of these
+    # locations. Can't use the locations directly since they are location to the
+    # copied spoiler world, so must compare via name and world id
+    if spoiler.playthrough:
+        translate = lambda loc: worlds[loc.world.id].get_location(loc.name)
+        spoiler_locations = set(map(translate, itertools.chain.from_iterable(spoiler.playthrough.values())))
+        item_locations &= spoiler_locations
+        # Skip even the checks
+        _maybe_set_light_arrows = lambda _: None
+    else:
+        _maybe_set_light_arrows = maybe_set_light_arrows
+
+    required_locations = []
+
+    search = Search([world.state for world in worlds])
+
+    for location in search.iter_reachable_locations(all_locations):
+        # Try to remove items one at a time and see if the game is still beatable
+        if location in item_locations:
+            old_item = location.item
+            location.item = None
+            # copies state! This is very important as we're in the middle of a search
+            # already, but beneficially, has search it can start from
+            if not search.can_beat_game():
+                required_locations.append(location)
+            location.item = old_item
+            _maybe_set_light_arrows(location)
+        search.state_list[location.item.world.id].collect(location.item)
+
+    # Filter the required location to only include location in the world
+    required_locations_dict = {}
+    for world in worlds:
+        required_locations_dict[world.id] = list(filter(lambda location: location.world.id == world.id, required_locations))
+    spoiler.required_locations = required_locations_dict
+
+
 def create_playthrough(spoiler):
     worlds = spoiler.worlds
-    if worlds[0].check_beatable_only and not State.can_beat_game([world.state for world in worlds]):
+    if worlds[0].check_beatable_only and not Search([world.state for world in worlds]).can_beat_game():
         raise RuntimeError('Uncopied is broken too.')
     # create a copy as we will modify it
     old_worlds = worlds
     worlds = copy_worlds(worlds)
 
     # if we only check for beatable, we can do this sanity check first before writing down spheres
-    if worlds[0].check_beatable_only and not State.can_beat_game([world.state for world in worlds]):
+    if worlds[0].check_beatable_only and not Search([world.state for world in worlds]).can_beat_game():
         raise RuntimeError('Cannot beat game. Something went terribly wrong here!')
 
     search = RewindableSearch([world.state for world in worlds])
@@ -544,6 +636,7 @@ def create_playthrough(spoiler):
         for location in collected:
             # Collect the item for the state world it is for
             search.state_list[location.item.world.id].collect(location.item)
+            maybe_set_light_arrows(location)
     logger.info('Collected %d spheres', len(collection_spheres))
 
     # Reduce each sphere in reverse order, by checking if the game is beatable
@@ -569,7 +662,7 @@ def create_playthrough(spoiler):
             location.item = None
 
             # An item can only be required if it isn't already obtained or if it's progressive
-            if search.state_list[old_item.world.id].item_count(old_item.name) < old_item.special.get('progressive', 1):
+            if search.state_list[old_item.world.id].item_count(old_item.name) < old_item.world.max_progressions[old_item.name]:
                 # Test whether the game is still beatable from here.
                 logger.debug('Checking if %s is required to beat the game.', old_item.name)
                 if not search.can_beat_game():
@@ -626,6 +719,11 @@ def create_playthrough(spoiler):
 
     # Then we can finally output our playthrough
     spoiler.playthrough = OrderedDict((str(i + 1), {location: location.item for location in sphere}) for i, sphere in enumerate(collection_spheres))
+    # Copy our light arrows, since we set them in the world copy
+    for w, sw in zip(worlds, spoiler.worlds):
+        if w.light_arrow_location:
+            # But the actual location saved here may be in a different world
+            sw.light_arrow_location = spoiler.worlds[w.light_arrow_location.world.id].get_location(w.light_arrow_location.name)
 
-    if worlds[0].entrance_shuffle != 'off':
+    if worlds[0].entrance_shuffle:
         spoiler.entrance_playthrough = OrderedDict((str(i + 1), list(sphere)) for i, sphere in enumerate(entrance_spheres))

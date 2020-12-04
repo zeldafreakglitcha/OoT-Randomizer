@@ -353,6 +353,11 @@ nb-card-body {
   position: relative;
   top: -7px;
   min-width: 100%;
+  pointer-events: none; //Reduces the clickable part to just the visible slider itself
+
+  /deep/ .mat-slider-wrapper {
+    pointer-events: auto;
+  }
 }
 
 .ioInputLabel {
@@ -544,6 +549,20 @@ nb-card-body {
     width: calc(50% - 15px) !important;
     left: calc(50% - 15px + 20px) !important;
     font-size: 0.7rem !important;
+  }
+}
+
+.webLayout { //Use slightly bigger padding to accommodate mobile better
+  .footerGenerateButton {
+    bottom: 5px;
+  }
+
+  .footerGenerateButtonNormalSmall {
+    bottom: 5px;
+  }
+
+  .footerGenerateButtonRaceSmall {
+    bottom: 5px;
   }
 }
 

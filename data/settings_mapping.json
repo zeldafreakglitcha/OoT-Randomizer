@@ -14,7 +14,9 @@
             "rom",
             "output_dir",
             "enable_distribution_file",
+            "enable_cosmetic_file",
             "distribution_file",
+            "cosmetic_file",
             "count",
             "create_spoiler",
             "create_cosmetics_log",
@@ -57,7 +59,9 @@
           "row_span": [1,1,1],
           "settings": [
             "enable_distribution_file",
+            "enable_cosmetic_file",
             "distribution_file",
+            "cosmetic_file",
             "create_spoiler",
             "web_output_type",
             "rom",
@@ -101,6 +105,8 @@
           "col_span": 4,
           "row_span": [1,1,1],
           "settings": [
+            "enable_cosmetic_file",
+            "cosmetic_file",
             "web_output_type",
             "rom",
             "web_wad_file",
@@ -142,10 +148,14 @@
           "row_span": [6,6,9],
           "settings": [
             "open_forest",
+            "open_kakariko",
             "open_door_of_time",
             "zora_fountain",
             "gerudo_fortress",
             "bridge",
+            "bridge_medallions",
+            "bridge_stones",
+            "bridge_rewards",
             "bridge_tokens",
             "trials_random",
             "trials"
@@ -157,10 +167,16 @@
           "row_span": [6,6,9],
           "settings": [
             "starting_age",
-            "entrance_shuffle",
+            "shuffle_interior_entrances",
+            "shuffle_grotto_entrances",
+            "shuffle_dungeon_entrances",
+            "shuffle_overworld_entrances",
+            "owl_drops",
+            "warp_songs",
+            "spawn_positions",
             "triforce_hunt",
             "triforce_goal_per_world",
-            "bombchus_in_logic",            
+            "bombchus_in_logic",
             "one_item_per_dungeon",
             "mq_dungeons_random",
             "mq_dungeons"
@@ -171,16 +187,17 @@
           "text": "Shuffle",
           "row_span": [6,6,9],
           "settings": [
+            "shuffle_song_items",
             "shopsanity",
             "tokensanity",
             "shuffle_scrubs",
             "shuffle_cows",
-            "shuffle_song_items",
             "shuffle_kokiri_sword",
             "shuffle_ocarinas",
             "shuffle_weird_egg",
             "shuffle_gerudo_card",
-            "shuffle_beans"
+            "shuffle_beans",
+            "shuffle_medigoron_carpet_salesman"
           ]
         },
         {
@@ -190,8 +207,13 @@
           "settings": [
             "shuffle_mapcompass",
             "shuffle_smallkeys",
+            "shuffle_fortresskeys",
             "shuffle_bosskeys",
             "shuffle_ganon_bosskey",
+            "lacs_medallions",
+            "lacs_stones",
+            "lacs_rewards",
+            "lacs_tokens",
             "enhance_map_compass"
           ]
         }
@@ -206,11 +228,10 @@
           "name": "main_section",
           "text": "",
           "col_span": 4,
-          "row_span": [3,3,3],
+          "row_span": [1,1,1],
           "settings": [
             "all_reachable",
-            "logic_no_night_tokens_without_suns_song",
-            "logic_lens"
+            "logic_no_night_tokens_without_suns_song"
           ]
         },
         {
@@ -286,13 +307,16 @@
           "text": "Timesavers",
           "row_span": [1,1,1],
           "settings": [
+            "skip_child_zelda",
             "no_escape_sequence",
             "no_guard_stealth",
             "no_epona_race",
-            "no_first_dampe_race",
+            "skip_some_minigame_phases",
+            "complete_mask_quest",
             "useful_cutscenes",
             "fast_chests",
             "free_scarecrow",
+            "fast_bunny_hood",
             "chicken_count_random",
             "chicken_count",
             "big_poe_count_random",
@@ -309,8 +333,10 @@
             "clearer_hints",
             "hints",
             "hint_dist",
+            "bingosync_url",
             "text_shuffle",
             "damage_multiplier",
+			"no_collectible_hearts",
             "starting_tod"
           ]
         },
@@ -341,43 +367,46 @@
           "settings": [
             "default_targeting",
             "display_dpad",
+            "correct_model_colors",
             "randomize_all_cosmetics"
           ]
         },
         {
-          "name": "equipment_section",
-          "text": "Equipment",
+          "name": "equipment_color_section",
+          "text": "Equipment Colors",
           "is_colors": true,
           "col_span": 1,
-          "row_span": [6,6,6],
+          "row_span": [5,5,5],
           "settings": [
             "kokiri_color",
             "goron_color",
             "zora_color",
             "silver_gauntlets_color",
             "golden_gauntlets_color",
-            "sword_trail_duration",
-            "sword_trail_color_inner",
-            "sword_trail_color_outer"
+            "mirror_shield_frame_color"
           ]
         },
         {
-          "name": "ui_section",
+          "name": "ui_color_section",
           "text": "UI Colors",
           "is_colors": true,
           "col_span": 1,
-          "row_span": [6,6,6],
+          "row_span": [5,5,5],
           "settings": [
             "heart_color",
-            "magic_color"
+            "magic_color",
+            "a_button_color",
+            "b_button_color",
+            "c_button_color",
+            "start_button_color"
           ]
         },
         {
-          "name": "navi_section",
-          "text": "Navi Colors",
+          "name": "misc_color_section",
+          "text": "Misc. Colors",
           "is_colors": true,
           "col_span": 2,
-          "row_span": [6,6,6],
+          "row_span": [5,5,5],
           "settings": [
             "navi_color_default_inner",
             "navi_color_default_outer",
@@ -386,7 +415,14 @@
             "navi_color_npc_inner",
             "navi_color_npc_outer",
             "navi_color_prop_inner",
-            "navi_color_prop_outer"
+            "navi_color_prop_outer",
+            "bombchu_trail_color_inner",
+            "bombchu_trail_color_outer",
+            "boomerang_trail_color_inner",
+            "boomerang_trail_color_outer",
+            "sword_trail_color_inner",
+            "sword_trail_color_outer",
+            "sword_trail_duration"
           ]
         }
       ]

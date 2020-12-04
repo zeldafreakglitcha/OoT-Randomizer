@@ -193,21 +193,29 @@ class Settings:
             if self.distribution_file:
                 try:
                     self.distribution = Distribution.from_file(self, self.distribution_file)
-                    self.using_distribution_file = True
                 except FileNotFoundError:
                     logging.getLogger('').warning("Distribution file not found at %s" % (self.distribution_file))
+                    self.enable_distribution_file = False
             else:
                 logging.getLogger('').warning("Plandomizer enabled, but no distribution file provided.")
+                self.enable_distribution_file = False
         elif self.distribution_file:
             logging.getLogger('').warning("Distribution file provided, but using it not enabled. "
                     "Did you mean to set enable_distribution_file?")
         else:
             self.distribution = Distribution(self)
 
+        self.reset_distribution()
+
+        self.numeric_seed = self.get_numeric_seed()
+
+
+    def reset_distribution(self):
+        self.distribution.reset()
+
         for location in self.disabled_locations:
             self.distribution.add_location(location, '#Junk')
 
-        self.numeric_seed = self.get_numeric_seed()
 
     def check_dependency(self, setting_name, check_random=True):
         return self.get_dependency(setting_name, check_random) == None
@@ -235,10 +243,11 @@ class Settings:
         self.numeric_seed = self.get_numeric_seed()
 
 
-    def resolve_random_settings(self, cosmetic):
+    def resolve_random_settings(self, cosmetic, randomize_key=None):
         sorted_infos = list(setting_infos)
         sort_key = lambda info: 0 if info.dependency is None else 1
         sorted_infos.sort(key=sort_key)
+        randomize_keys_enabled = set()
 
         for info in sorted_infos:
             # only randomize cosmetics options or non-cosmetic
@@ -248,9 +257,30 @@ class Settings:
             if self.check_dependency(info.name, check_random=True):
                 continue
 
-            if 'randomize_key' in info.gui_params and self.__dict__[info.gui_params['randomize_key']]:               
+            if 'randomize_key' not in info.gui_params:
+                continue
+
+            if randomize_key is not None and info.gui_params['randomize_key'] != randomize_key:
+                continue
+
+            if self.__dict__[info.gui_params['randomize_key']]:
+                randomize_keys_enabled.add(info.gui_params['randomize_key'])
                 choices, weights = zip(*info.gui_params['distribution'])
                 self.__dict__[info.name] = random_choices(choices, weights=weights)[0]
+
+        # Second pass to make sure disabled settings are set properly.
+        # Stupid hack: disable randomize keys, then re-enable.
+        for randomize_keys in randomize_keys_enabled:
+            self.__dict__[randomize_keys] = False
+        for info in sorted_infos:
+            if cosmetic == info.shared:
+                continue
+            dependency = self.get_dependency(info.name, check_random=False)
+            if dependency is None:
+                continue
+            self.__dict__[info.name] = dependency
+        for randomize_keys in randomize_keys_enabled:
+            self.__dict__[randomize_keys] = True
 
 
     # add the settings as fields, and calculate information based on them
@@ -274,6 +304,10 @@ class Settings:
     def to_json(self):
         return {setting.name: self.__dict__[setting.name] for setting in setting_infos
                 if setting.shared and setting.name not in self._disabled}
+
+
+    def to_json_cosmetics(self):
+        return {setting.name: self.__dict__[setting.name] for setting in setting_infos if setting.cosmetic}
 
 
 # gets the randomizer settings, whether to open the gui, and the logger level from command line arguments

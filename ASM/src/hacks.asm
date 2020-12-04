@@ -47,9 +47,9 @@
 ;==================================================================================================
 
 ; Patch NPCs to give override-compatible items
-.orga 0xDB13D3 :: .byte 0x76 ; Frog Ocarina Game
+.orga 0xDB13D3 :: .byte 0x76 ; Frogs Ocarina Game
 .orga 0xDF2647 :: .byte 0x76 ; Ocarina memory game
-.orga 0xE2F093 :: .byte 0x34 ; Bombchu Bowling Bomb Bag
+.orga 0xE2F093 :: .byte 0x34 ; Market Bombchu Bowling Bomb Bag
 .orga 0xEC9CE7 :: .byte 0x7A ; Deku Theater Mask of Truth
 
 ; Runs when storing an incoming item to the player instance
@@ -284,6 +284,7 @@
 ; Replaces: code that draws the fade-out rectangle on file load
 .orga 0xBAF738 ; In memory: 0x803B3538
 .area 0x60, 0
+    or      a1, r0, s0   ; menu data
     jal     draw_file_select_hash
     andi    a0, t8, 0xFF ; a0 = alpha channel of fade-out rectangle
 
@@ -292,6 +293,68 @@
     jr      ra
     addiu   sp, sp, 0x88
 .endarea
+
+;==================================================================================================
+; Hide file details panel
+;==================================================================================================
+; keep death count alpha at 0 instead of using file_detail alpha
+.orga 0xBAC064 ; In memory: 0x803AFE64
+    move    t7, r0 ; was: lh t7, 0x4A7E (t4)
+
+; keep hearts alpha at 0 instead of using file_detail alpha
+.orga 0xBAC1BC ; In memory: 0x803AFFBC
+    move    t7, r0 ; was: lh t7, 0x4A7E (t4)
+
+; keep stones/medals alpha at 0 instead of using file_detail alpha
+.orga 0xBAC3EC ; In memory: 0x803B01EC
+    move    t9, r0 ; was: lh t9, 0x4A7E (t3)
+
+; keep detail panel alpha at 0 instead of using file_detail alpha
+.orga 0xBAC94C ; In memory: 0x803B074C
+    move    t9, r0 ; was: lh t9, 0x4A7E (t9)
+
+; keep file tag alpha at 0xC8 instead of subtracting 0x19 each transition frame
+.orga 0xBAE5A4 ; In memory: 0x803B23A4
+    sh      t3, 0x4A6C (v1) ; was: sh t5, 0x4A6C (v1)
+
+; prevent setting file tag alpha to 0x00 when transition is finished
+.orga 0xBAE5C8 ; In memory: 0x803B23C8
+    nop ; was: sh r0, 0x4A6C (v1)
+
+; prevent increasing alpha when transitioning away from file
+.orga 0xBAE864 ; In memory: 0x803B2664
+    nop ; was: sh t5, 0x4A6C (v1)
+
+; change file positions in copy menu
+.orga 0xBB05FC ; In memory: 0x803B43FC
+    .word 0x0000FFC0
+    .word 0xFFB0FFB0
+
+; keep file tag alpha at 0xC8 in copy menu
+.orga 0xBA18C4 ; In memory: 0x803A56C4
+    ori     t4, r0, 0x00C8 ; was: addiu t4, t9, 0xFFE7
+
+.orga 0xBA1980 ; In memory: 0x803A5780
+    ori     t0, r0, 0x00C8 ; was: addiu t0, t9, 0xFFE7
+    
+.orga 0xBA19DC ; In memory: 0x803A57DC
+    nop ; was: sh r0, 0x4A6C (t2)
+    
+.orga 0xBA1E20 ; In memory: 0x803A5C20
+    ori     t5, r0, 0x00C8 ; was: addiu t5, t4, 0x0019
+
+.orga 0xBA18C4 ; In memory: 0x803A56C4
+    ori     t4, r0, 0x00C8 ; was: ori t4, t4, 0x00C8
+
+; keep file tag alpha at 0xC8 in erase menu
+.orga 0xBA34DC ; In memory: 0x803A72DC
+    ori     t8, r0, 0x00C8 ; was: addiu t8, t7, 0xFFE7
+
+.orga 0xBA3654
+    nop ; was: sh r0, 0x4A6C (t6)
+
+.orga 0xBA39D0
+    ori     t5, r0, 0x00C8 ; was: addiu t5, t4, 0x0019
 
 ;==================================================================================================
 ; Special item sources
@@ -479,12 +542,6 @@ nop
 ;==================================================================================================
 ; Song Fixes
 ;==================================================================================================
-
-; Replaces:
-;   lw      t5, 0x8AA0(t5)
-.orga 0xAE5DF0 ; In memory: 8006FE90
-    jal     suns_song_fix
-
 ; Replaces:
 ;   addu    at, at, s3
 .orga 0xB54E5C ; In memory: 800DEEFC
@@ -713,16 +770,17 @@ nop
 skip_GS_BGS_text:
 
 ;==================================================================================================
-; Empty bomb fix
+; Empty Bomb Fix
 ;==================================================================================================
 
 ; Replaces:
-;   lw      a1, 0x0018 (sp) ; bomb ovl+134
-;   lw      a0, 0x001C (sp)
-.orga 0xC0E404
-    jal     empty_bomb_fix
-    lw      a1, 0x0018 (sp)
+;sw      r0, 0x0428(v0)
+;sw      t5, 0x066C(v0)
 
+.orga 0xC0E77C
+    jal     empty_bomb
+    sw      r0, 0x0428(v0)
+    
 ;==================================================================================================
 ; Damage Multiplier
 ;==================================================================================================
@@ -786,7 +844,7 @@ skip_GS_BGS_text:
 .orga 0xD35EFC
     nop
 
-; Fix Link the Goron to always work
+; Fix GC Rolling Goron as Adult to always work
 .orga 0xED2FAC
     lb      t6, 0x0F18(v1)
 
@@ -894,6 +952,13 @@ skip_GS_BGS_text:
 ; Replaces: addiu   at, zero, 0x0002
 .orga 0xDC8828
     move    at, t5
+
+;==================================================================================================
+; Disable fishing anti-piracy checks
+;==================================================================================================
+; Replaces: sltiu   v0, v0, 1
+.orga 0xDBEC80
+    li      v0, 0
 
 ;==================================================================================================
 ; Bombchus In Logic Hooks
@@ -1043,9 +1108,14 @@ skip_GS_BGS_text:
 ; Warp song speedup
 ;==================================================================================================
 ;
-.orga 0xBEA044
+;manually set next entrance and fade out type
+.orga 0xBEA044 
    jal      warp_speedup
    nop
+
+.orga 0xB10CC0 ;set fade in type after the warp
+    jal     set_fade_in
+    lui     at, 0x0001
    
 
 ;==================================================================================================
@@ -1490,7 +1560,7 @@ skip_GS_BGS_text:
     sw      t9, 0x0000(s1)
     lhu     t4, 0x0252(s7)
     move    at, v0
-    
+
 ;==================================================================================================
 ; Expand Audio Thread memory
 ;==================================================================================================
@@ -1537,7 +1607,571 @@ skip_GS_BGS_text:
 ; Replaces: lhu     t0, 0x0EDA(v0)
 ;           or      a0, s0, zero
 ;           andi    t1, t0, 0x0008
+
 .orga 0xE565D0
     jal     kz_moved_check
     nop
     or      a0, s0, zero
+
+; ==================================================================================================
+; HUD Button Colors
+; ==================================================================================================
+; Fix HUD Start Button to allow a value other than 00 for the blue intensity
+; Replaces: andi    t6, t7, 0x00FF
+.orga 0xAE9ED8
+    ori     t6, t7, 0x0000 ; add blue intensity to the start button color (Value Mutated in Cosmetics.py)
+
+; Handle Dynamic Shop Cursor Colors
+.orga 0xC6FF30
+.area 0x4C, 0
+    mul.s   f16, f10, f0
+    mfc1    a1, f8          ; color delta 1 (for extreme colors)
+    trunc.w.s f18, f16
+    mfc1    a2, f18         ; color delta 2 (for general colors)
+    swc1    f0, 0x023C(a0)  ; displaced code
+
+    addiu   sp, sp, -0x18
+    sw      ra, 0x04(sp)
+    jal     shop_cursor_colors
+    nop
+    lw      ra, 0x04(sp)
+    addiu   sp, sp, 0x18
+
+    jr      ra
+    nop
+.endarea
+
+; ==================================================================================================
+; Chain Horseback Archery Rewards
+; ==================================================================================================
+; Replaces: jal     0x80022AD0
+;           sw      a0, 0x0018(sp)
+.orga 0xE12A04
+    jal     handle_hba_rewards_chain
+    sw      a0, 0x0018(sp)
+
+; Replaces: sw      t6, 0x02A4(a0)
+.orga 0xE12A20
+    sw      v1, 0x02A4(a0)
+
+;==================================================================================================
+; Remove File 3 From File Select
+;==================================================================================================
+;Main Menu Up
+; Replaces: sh      t6, 0xCA2A(at)
+;           lh      t7, 0x4A2A(v1)
+.orga 0xBAA168
+    jal     skip_3_up_main
+    sh      t6, 0xCA2A(at)
+
+;Main Menu Down
+; Replaces: sh      t5, 0xCA2A(at)
+;           lh      t6, 0x4A2A(v1)
+.orga 0xBAA198
+    jal     skip_3_down_main
+    sh      t5, 0xCA2A(at)
+
+;Copy From Up
+; Replaces: sh      t7, 0xCA2A(at)
+;           lh      v1, 0x4A2A(t0)
+.orga 0xBA16AC
+    jal     skip_3_up_copy_from
+    sh      t7, 0xCA2A(at)
+
+;Copy From Down
+; Replaces: sh      t9, 0xCA2A(at)
+;           lh      v1, 0x4A2A(t0)
+.orga 0xBA16E0
+    jal     skip_3_down_copy_from
+    sh      t9, 0xCA2A(at)
+
+;Copy To Up
+; Replaces: sh      t5, 0xCA2A(at)
+;           lh      t6, 0x4A38(t0)
+;           lh      v1, 0x4A2A(t0)
+.orga 0xBA1C68
+    jal     skip_3_up_copy_to
+    sh      t5, 0xCA2A(at)
+    lh      t6, 0x4A38(t0)
+
+;Copy To Down
+; Replaces: sh      t9, 0xCA2A(at)
+;           lh      v1, 0x4A2A(t0)
+.orga 0xBA1CD0
+    jal     skip_3_down_copy_to
+    sh      t9, 0xCA2A(at)
+
+;Special Case For Copy File 2 Down
+; Replaces: sh      t3, 0xCA2A(at)
+;           lh      v1, 0x4A2A(t0)
+.orga 0xBA1D04
+    jal     skip_3_down_copy_to_2
+    nop
+
+;Erase Up
+; Replaces: sh      t9, 0xCA2A(at)
+;           lh      v1, 0x4A2A(t0)
+.orga 0xBA32CC
+    jal     skip_3_up_erase
+    sh      t9, 0xCA2A(at)
+
+;Erase Down
+; Replaces: sh      t3, 0xCA2A(at)
+;           lh      v1, 0x4A2A(t0)
+.orga 0xBA3300
+    jal     skip_3_down_erase
+    sh      t3, 0xCA2A(at)
+
+;File 3 Position
+; Replaces: or      a0, s0, r0
+;           lh      t3, 0x4A2E(a2)
+.orga 0xBAF4F4
+    jal     move_file_3
+    or      a0, s0, r0
+
+; Ignore File 3 when checking for available copy slot
+; Replaces: lbu     t6, 0x001C(v0)
+.orga 0xBAA3AC ; In memory: 0x803AE1AC
+    or      t6, a1, r0
+
+;==================================================================================================
+; Make Twinrova Wait For Link
+;==================================================================================================
+;Hook into twinrova update function and check for links height
+; Replaces: sw      s2, 0x44(sp)
+;           sw      s0, 0x3C(sp)
+.orga 0xD68D68
+    jal     rova_check_pos
+    sw      s2, 0x44(sp)
+
+;If the height check hasnt been met yet, branch to the end of the update function
+;This freezes twinrova until the condition is met
+; Replaces: sdc1    f24, 0x30(sp)
+;           lw      s2, 0x1C44(s3)
+;           addiu   t6, r0, 0x03
+;           sb      t6, 0x05B0(s1)
+;           lbu     t7, 0x07AF(s3)
+;           mfc1    a2, f22
+;           mfc1    a3, f20
+.orga 0xD68D70
+    la      t1, START_TWINROVA_FIGHT
+    lb      t1, 0x00(t1)
+    beqz    t1, @Twinrova_Update_Return
+    lw      ra, 0x4C(sp)
+    jal     twinrova_displaced
+    sdc1    f24, 0x30(sp)
+.orga 0xD69398
+@Twinrova_Update_Return:
+
+;nop various things in the init function
+.orga 0xD62100
+    jal     twinrova_set_action_ice
+.orga 0xD62110
+    lui     at, 0x4248
+.orga 0xD62128
+    nop
+.orga 0xD621CC
+    jal     twinrova_set_action_fire
+.orga 0xD621DC
+    lui     at, 0x4248
+.orga 0xD6215C
+    nop
+.orga 0xD6221C
+    nop
+.orga 0xD73118 ;reloc
+    nop
+.orga 0xD73128 ;reloc
+    nop
+
+;Update alpha of the portal
+;Replaces: lbu     t8, 0x00(v0)
+.orga 0xD69C80
+    jal     rova_portal
+
+;Update position of the ice portal
+.orga 0xD6CC18
+    jal     ice_pos
+    nop
+
+;Update position of the fire portal
+.orga 0xD6CDD4
+    jal     fire_pos
+    nop
+
+;==================================================================================================
+; Fix Links Angle in Fairy Fountains
+;==================================================================================================
+
+;Hook great fairy update function and set position/angle when conditions are met
+; Replaces: or      a0, s0, r0
+;           or      a1, s1, r0
+.orga 0xC8B24C
+    jal     fountain_set_posrot
+    or      a0, s0, r0
+
+;==================================================================================================
+; Speed Up Gate in Kakariko
+;==================================================================================================
+; gate opening x
+; Replaces: lui     at, 0x4000 ;2.0f
+.orga 0xDD366C
+    lui     at, 0x40D0 ;6.5f
+
+; gate opening z
+; Replaces: lui     a2, 0x3F4C
+;           sub.s   f8, f4, f6
+;           lui     a3, 0x3E99
+;           ori     a3, a3, 0x999A
+;           ori     a2, a2, 0xCCCD
+.orga 0xDD367C
+    lui     a2, 0x4000
+    sub.s   f8, f4, f6
+    lui     a3, 0x4000
+    nop
+    nop
+
+; gate closing x
+; Replaces: lui     at, 0x4000 ;2.0f
+.orga 0xDD3744
+    lui     at, 0x40D0 ;6.5f
+
+; gate closing z
+; Replaces: lui     a2, 0x3F4C
+;           add.s   f8, f4, f6
+;           lui     a3, 0x3E99
+;           ori     a3, a3, 0x999A
+;           ori     a2, a2, 0xCCCD
+.orga 0xDD3754
+    lui     a2, 0x4000
+    add.s   f8, f4, f6
+    lui     a3, 0x4000
+    nop
+    nop
+
+;==================================================================================================
+; Prevent Carpenter Boss Softlock
+;==================================================================================================
+; Replaces: or      a1, s1, r0
+;           addiu   a2, r0, 0x22 
+.orga 0xE0EC50
+    jal     prevent_carpenter_boss_softlock
+    or      a1, s1, r0
+
+;==================================================================================================
+; Skip Song Playback When Learning Songs
+;==================================================================================================
+; this hack sets the learning song ID to 0 (minuet) which forces the playback to be skipped.
+; this change does not affect the value passed to Item_Give, so you still recieve the right song.
+; this allows other actors to be responsible for showing the "you learned" text and avoids undesireable 
+; effects like suns song playback skipping time
+; 
+; Replaces: sh      a2, 0x63ED(at)
+.orga 0xB55428
+    sh      r0, 0x63ED(at)
+
+;==================================================================================================
+; Skip Song of Storms Song Demonstration
+;==================================================================================================
+;skip playing the song demonstration
+; Replaces: jal     0x800DD400 ;plays song demo
+.orga 0xE42C00
+   jal     sos_skip_demo
+
+;hook at the beginning of the song playback function to do a few things:
+;set player stateFlags2, change interface alpha, show song staff, change actionFunc
+;if songs as items is on, dont show the staff
+; Replaces: addiu    a0, a2, 0x20D8
+.orga 0xE42B5C
+   jal     sos_handle_staff
+
+;after the `sos_handle_staff` hook, skip the rest of the original function
+.orga 0xE42B64
+   b       0xE42B64 + (4 * 14)
+   nop
+
+;hook into the function where the windmill guy is waiting for song playback
+;for no songs as items: handle showing text at the right time
+;for songs as items: give the item, set flags, set actionFunc and return
+.orga 0xE429DC
+   jal     sos_handle_item
+   nop
+
+;after the `sos_handle_item` hook, skip the rest of the original function
+.orga 0xE429E4
+   b       0xE429E4 + (4 * 84)
+   nop
+
+;dont allow link to talk to the windmill guy if he is recieving an item
+; Replaces: lh      t6, 0x8A(s0)
+;           lh      t7, 0xB6(s0)
+;           lhu     t9, 0xB4AE(t9)
+;           lw      v1, 0x1C44(s1)
+.orga 0xE42C44
+   jal     sos_talk_prevention
+   lh      t6, 0x8A(s0)   ;displaced
+   bnez_a  t2, 0xE42D64
+   lw      v1, 0x1C44(s1) ;displaced
+
+;==================================================================================================
+; Fix Zelda in Final Battle
+;==================================================================================================
+;change zeldas actionFunc index from 07 to 0C
+; Replaces: addiu    t6, r0, 0x07
+.orga 0xE7CC90
+    addiu    t6, r0, 0x0C
+
+;change animation to wait anim if its not set yet
+; Replaces: beqz     a1
+;           or       a2, r0, r0
+;           lui      a1, 0x0600
+;           addiu    a1, a1, 0x6F04
+;           addiu    a3, r0, 0x0000
+.orga 0xE7D19C
+    jal      zelda_check_anim
+    lui      a1, 0x0600
+    beq_a    a1, t0, 0xE7D1B4
+    or       a2, r0, r0
+    addiu    a3, r0, 0x0000
+
+;set flag so tower collapse cs never attempts to play (tower collapse sequence on)
+; Replaces: andi     t7, t6, 0xFF7F
+.orga 0xE81128
+    ori     t7, t6, 0x0080
+
+;==================================================================================================
+; Override Links call to SkelAnime_ChangeLinkAnimDefaultStop
+;==================================================================================================
+;override the call to SkelAnime_ChangeLinkAnimDefaultStop in 80388BBC to allow for 
+;special cases when changing links animation
+; Replaces: jal      0x8008C178
+.orga 0xBCDBD8
+    jal     override_changelinkanimdefaultstop
+
+;==================================================================================================
+; Fix Royal Tombstone Cutscene
+;==================================================================================================
+;when the cutscene starts, move the grave back a bit so that the hole is not covered
+; Replaces: sw       a1, 0x44(sp)
+;           lw       t6, 0x44(sp)
+.orga 0xCF7AD4
+    jal     move_royal_tombstone
+    sw      a1, 0x44(sp)
+
+;==================================================================================================
+; Speed Up Gold Gauntlets Rock Throw
+;==================================================================================================
+;replace onepointdemo calls for the different cases so the cutscene never plays
+;for cases 0 and 4 set position so that the rock lands in the right place
+
+;case 1: light trial (breaks on impact)
+; Replaces: jal       0x8006B6FC
+.orga 0xCDF3EC
+    nop
+
+;case 0: fire trial
+; Replaces: jal       0x8006B6FC
+.orga 0xCDF404
+    nop
+
+;case 4: outside ganons castle
+; Replaces: jal       0x8006B6FC
+.orga 0xCDF420 
+    jal     heavy_block_set_switch
+
+;set links position and angle to the center of the block as its being lifted
+; Replaces: or         t9, t8, at
+;           sw         t9, 0x66C(s0)
+.orga 0xBD5C58
+    jal      heavy_block_posrot
+    or       t9, t8, at
+
+;set links action to 7 so he can move again
+; Replaces: swc1      f4, 0x34(sp)
+;           lwc1      f6, 0x0C(s0)
+.orga 0xCDF638
+    jal     heavy_block_set_link_action
+    swc1    f4, 0x34(sp)
+
+;reduce quake timer for case 1
+;Replaces: addiu      a1, r0, 0x03E7
+.orga 0xCDF790
+    addiu      a1, r0, 0x1E
+
+;skip parts of links lifting animation
+;Replaces: sw         a1, 0x34(sp)
+;          addiu      a1, s0, 0x01A4
+.orga 0xBE1BC8
+    jal    heavy_block_shorten_anim
+    sw     a1, 0x34(sp)
+
+;slightly change rock throw trajectory to land in the right place
+;Replaces: lui        at, 0x4220
+.orga 0xBE1C98
+    lui    at, 0x4218
+
+;==================================================================================================
+; Skip Malons Song Demonstration
+;==================================================================================================
+;skip function call to show song demonstration
+.orga 0xD7EB4C
+    nop
+
+;go straight to item function for songs as items
+;Replaces: sw     t0, 0x04(a2)
+;          sw     t1, 0x0180(a2)
+.orga 0xD7EB70
+    jal    malon_goto_item
+    sw     t0, 0x04(a2)
+
+;skip check for dialog state to be 7 (demonstration finished)
+.orga 0xD7EBBC
+    nop
+
+;check for songs as items to handle song staff
+;Replaces: jal    0x800DD400
+.orga 0xD7EBC8
+    jal    malon_handle_staff
+
+;various changes to final actionFunc before normal cutscene would start
+.orga 0xD7EBF0
+    addiu   sp, sp, -0x18 ;move stuff around to save ra
+    sw      ra, 0x14(sp)
+    jal     malon_ra_displaced
+    lw      v0, 0x1C44(a1)
+.skip 4 * 1
+    nop
+.skip 4 * 2
+    jal    malon_songs_as_items ;make branch fail if songs as items is on
+    lhu    t8, 0x04C6(t8)
+.skip 4 * 5
+    nop
+.skip 4 * 1
+    jal    malon_show_text  ;dont set next cutscene index, also show text if song
+.skip 4 * 2
+    nop        ;dont set transition fade type
+.skip 4 * 4    
+    nop        ;dont set load flag 
+.skip 4 * 2  
+    j      malon_check_give_item
+
+;set relevant flags and restore malon so she can talk again
+.orga 0xD7EC70
+    j    malon_reload
+
+;==================================================================================================
+; Clean Up Big Octo Room For Multiple Visits
+;==================================================================================================
+;make link drop ruto if "visited big octo" flag is set
+;Replaces: lh     t9, 0x1C(s0)
+;          lh     t6, 0x1C(s0)
+.orga 0xD4BCB0
+    jal    drop_ruto
+    lh     t9, 0x1C(s0)
+
+;kill Demo_Effect if "visited big octo" flag is set
+;Replaces: sw     a1, 0x64(sp)
+;          lh     v0, 0x1C(s0)
+.orga 0xCC85B8
+    jal    check_kill_demoeffect
+    sw     a1, 0x64(sp)
+
+;==================================================================================================
+; Jabu Spiritual Stone Actor Override
+;==================================================================================================
+; Replaces: addiu   t8, zero, 0x0006
+;           sh      t8, 0x017C(a0)
+.orga 0xCC8594
+    jal     demo_effect_medal_init
+    addiu   t8, zero, 0x0006
+
+;==================================================================================================
+; Use Sticks and Masks as Adult
+;==================================================================================================
+; Deku Stick
+; Replaces: addiu   t8, v1, 0x0008
+;           sw      t8, 0x02C0(t7)
+.orga 0xAF1814
+    jal     stick_as_adult
+    nop
+
+; Masks
+; Replaces: sw      t6, 0x0004(v0)
+;           lb      t7, 0x013F(s0)
+.orga 0xBE5D8C
+    jal     masks_as_adult
+    nop
+
+;==================================================================================================
+; Carpet Salesman Shop Shuffle
+;==================================================================================================
+; Replaces: sw      a1, 0x001C(sp)
+;           sw      a2, 0x0020(sp)
+.orga 0xE5B2F4
+    jal     carpet_inital_message
+    sw      a1, 0x001C(sp)
+
+; Replaces: lui     a3, 0x461C
+;           ori     a3, a3, 0x4000
+.orga 0xE5B538
+    jal     carpet_buy_item_hook
+    lui     a3, 0x461C
+
+;==================================================================================================
+; Medigoron Shop Shuffle
+;==================================================================================================
+; Replaces: lui     a3, 0x43CF
+;           ori     a3, a3, 0x8000
+.orga 0xE1FEAC
+    jal     medigoron_buy_item_hook
+    lui     a3, 0x43CF
+
+; Replaces: lui     v1, 0x8012
+;           addiu   v1, v1, 0xA5D0
+;           lw      t6, 0x0004(v1)
+;           addiu   at, zero, 0x0005
+;           addiu   v0, zero, 0x0011
+;           beq     t6, zero, @medigoron_check_2nd_part
+;           lui     a0, 0x8010
+;           b       @medigoron_check_2nd_part
+;           addiu   v0, zero, 0x0005
+; @medigoron_check_2nd_part:
+.orga 0xE1F72C
+    addiu   sp, sp, -0x18
+    sw      ra, 0x14(sp)
+    jal     medigoron_inital_check
+    nop
+    lw      ra, 0x14(sp)
+    addiu   sp, sp, 0x18
+    slti    at, v0, 5
+    bnez    at, @medigoron_check_return
+    addiu   at, zero, 0x0005
+
+.orga 0xE1F794
+@medigoron_check_return:
+
+;==================================================================================================
+; Bombchu Ticking Color
+;==================================================================================================
+; Replaces: ctc1    t9, $31
+;           ori     t5, t4, 0x00FF
+.orga 0xD5FF94
+    jal     bombchu_back_color
+    ctc1    t9, $31
+
+;==================================================================================================
+; Repoint English Message Table to JP
+;==================================================================================================
+;To make room for more message table entries, store the jp table pointer to the english one as well.
+;The rest of this hack is implemented in Messages.py
+; Replaces: sw      t7, 0x00(a1)
+.orga 0xB575C8
+    sw      t6, 0x00(a1)
+
+;==================================================================================================
+; Null Boomerang Pointer in Links Instance
+;==================================================================================================
+;Clear the boomerang pointer in Links instance when the boomerangs destroy function runs.
+;This fixes an issue where the boomerang trail color hack checks this pointer to write data.
+; Replaces: sw      a0, 0x18(sp)
+.orga 0xC5A9F0
+    jal     clear_boomerang_pointer

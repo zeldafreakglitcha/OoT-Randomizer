@@ -521,23 +521,8 @@ export class GUIGlobal {
         console.log("Remote:", remoteVersion);
         result.latestVersion = remoteVersion;
 
-        let currentSplit = res.replace('v', '').replace(' ', '.').split('.');
-        let remoteSplit = remoteVersion.replace('v', '').replace(' ', '.').split('.');
-
         //Compare versions
-        if (Number(remoteSplit[0]) > Number(currentSplit[0])) {
-          result.hasUpdate = true;
-        }
-        else if (Number(remoteSplit[0]) == Number(currentSplit[0])) {
-          if (Number(remoteSplit[1]) > Number(currentSplit[1])) {
-            result.hasUpdate = true;
-          }
-          else if (Number(remoteSplit[1]) == Number(currentSplit[1])) {
-            if (Number(remoteSplit[2]) > Number(currentSplit[2])) {
-              result.hasUpdate = true;
-            }
-          }
-        }
+        result.hasUpdate = this.isVersionNewer(remoteVersion, res);
 
         return result;  
       }
@@ -549,6 +534,64 @@ export class GUIGlobal {
       console.error(err);
       throw Error(err);
     }
+  }
+
+  isVersionNewer(newVersion: string, oldVersion: string) {
+
+    //Strip away dev strings
+    if (oldVersion.startsWith("dev_"))
+      oldVersion = oldVersion.replace('dev_', '');
+
+    if (newVersion.startsWith("dev_"))
+      newVersion = newVersion.replace('dev_', '');
+
+    let oldSplit = oldVersion.replace('v', '').replace(' ', '.').split('.');
+    let newSplit = newVersion.replace('v', '').replace(' ', '.').split('.');
+
+    //Version is not newer if the new version doesn't satisfy the format
+    if (newSplit.length < 3)
+      return false;
+
+    //Version is newer if the old version doesn't satisfy the format
+    if (oldSplit.length < 3)
+      return true;
+
+    //Compare major.minor.revision
+    if (Number(newSplit[0]) > Number(oldSplit[0])) {
+      return true;
+    }
+    else if (Number(newSplit[0]) == Number(oldSplit[0])) {
+      if (Number(newSplit[1]) > Number(oldSplit[1])) {
+        return true;
+      }
+      else if (Number(newSplit[1]) == Number(oldSplit[1])) {
+        if (Number(newSplit[2]) > Number(oldSplit[2])) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  findSettingByName(settingName: string) {
+
+    for (let tabIndex = 0; tabIndex < this.getGlobalVar('generatorSettingsArray').length; tabIndex++) {
+      let tab = this.getGlobalVar('generatorSettingsArray')[tabIndex];
+
+      for (let sectionIndex = 0; sectionIndex < tab.sections.length; sectionIndex++) {
+        let section = tab.sections[sectionIndex];
+
+        for (let settingIndex = 0; settingIndex < section.settings.length; settingIndex++) {
+          let setting = section.settings[settingIndex];
+
+          if (setting.name == settingName)
+            return setting;
+        }
+      }
+    }
+
+    return false;
   }
 
   verifyNumericSetting(settingsFile: any, setting: any, syncToGlobalMap: boolean = false) {
@@ -965,6 +1008,10 @@ export class GUIGlobal {
         return;
       }
 
+      //Hack: fromPatchFile forces generation count to 1 to avoid wrong percentage calculation
+      if (fromPatchFile)
+        settingsMap["count"] = 1;
+
       post.send(window, 'generateSeed', { settingsFile: settingsMap, staticSeed: useStaticSeed }).then(event => {
 
         var listenerProgress = post.on('generateSeedProgress', function (event) {
@@ -1040,6 +1087,15 @@ export class GUIGlobal {
     }
   }
 
+  hasRomExtension(fileName: string) {
+    fileName = fileName.toLowerCase();
+    return fileName.endsWith(".z64") || fileName.endsWith(".n64") || fileName.endsWith(".v64");
+  }
+
+  isValidFileObjectWeb(file: any) { //Web only
+    return file && typeof (file) == "object" && file.name && file.name.length > 0;
+  }
+
   readFileIntoMemoryWeb(fileObject: any, useArrayBuffer: boolean) { //Web only
 
     return new Promise<any>(function (resolve, reject) {
@@ -1066,61 +1122,131 @@ export class GUIGlobal {
     });
   }
 
+  async readJsonFileIntoMemoryWeb(file: any, sizeLimit: number) { //Web only
+
+    let fileJSON;
+
+    if (this.hasRomExtension(file.name)) { //Not a ROM check...
+      throw { error: "file_extension_was_rom" };
+    }
+
+    try {
+      fileJSON = await this.readFileIntoMemoryWeb(file, false);
+    }
+    catch (ex) {
+      throw { error: "file_read_error" };
+    }
+
+    if (!fileJSON || fileJSON.length < 1) {
+      throw { error: "file_not_valid" };
+    }
+
+    if (fileJSON.length > sizeLimit) { //Impose size limit to avoid server overload
+      throw { error: "file_too_big" };
+    }
+
+    //Test JSON parse it
+    try {
+      let jsonFileParsed = JSON.parse(fileJSON);
+
+      if (!jsonFileParsed || Object.keys(jsonFileParsed).length < 1) {
+        throw { error: "file_not_valid_json_empty" };
+      }
+    }
+    catch (err) {
+      console.error(err);
+      throw { error: "file_not_valid_json_syntax", message: err.message };
+    }
+
+    return fileJSON;
+  }
+
+  async readPlandoFileIntoMemoryWeb(settingName: string, settingText: string) { //Web only
+
+    let plandoFile = this.generator_settingsMap[settingName];
+
+    if (!this.isValidFileObjectWeb(plandoFile))
+      return null;
+
+    //Try to resolve the plando file by reading it into memory
+    console.log("Read Plando JSON file: " + plandoFile.name);
+
+    try {
+      let plandoFileText = await this.readJsonFileIntoMemoryWeb(plandoFile, 500000); //Will return the JSON file contents as text
+      return plandoFileText;
+    }
+    catch (ex) {
+      switch (ex.error) {       
+        case "file_read_error": {
+          throw { error: `An error occurred during the loading of the ${settingText}! Please try to enter it again.` };
+        }
+        case "file_not_valid": {
+          throw { error: `The ${settingText} specified is not valid!` };
+        }
+        case "file_too_big": {
+          throw { error: `The ${settingText} specified is too big! The maximum file size allowed is 500 KB.` };
+        }
+        case "file_not_valid_json_empty": {
+          throw { error: `The ${settingText} specified is not valid JSON! Please verify the syntax.` };
+        }
+        case "file_not_valid_json_syntax": {
+          throw { error: `The ${settingText} specified is not valid JSON! Please verify the syntax. Detail: ${ex.message}` };
+        }
+        default: {
+          //Bubble error upwards
+          throw ex;
+        }
+      }
+    }
+  }
+
   async generateSeedWeb(raceSeed: boolean = false, useStaticSeed: string = "") { //Web only
 
-    //Plando Logic
-    let plandoFile = null;
+    //Plando Seed Logic
+    let plandoFileSeed = null;
     if (this.generator_settingsMap["enable_distribution_file"]) {
 
-      plandoFile = this.generator_settingsMap["distribution_file"];
+      if (raceSeed) { //No support for race seeds
+        throw { error: "Plandomizer for seed creation is currently not supported for race seeds due security concerns. Please use a normal seed instead!" };
+      }
 
-      if (plandoFile && typeof (plandoFile) == "object" && plandoFile.name && plandoFile.name.length > 0) {
+      let setting = this.findSettingByName("distribution_file");
 
-        if (plandoFile.name.toLowerCase().endsWith(".z64") || plandoFile.name.toLowerCase().endsWith(".n64") || plandoFile.name.toLowerCase().endsWith(".v64")) { //Not a ROM check...
-          throw { error_rom_in_plando: "Your Ocarina of Time ROM doesn't belong in the plandomizer setting. This entirely optional setting is used to plan out seeds before generation by manipulating spoiler log files. If you want to generate a normal seed instead, please click YES!" };
-        }
-
-        if (raceSeed) { //No support for race seeds
-          throw { error: "Plandomizer is currently not supported for race seeds due security concerns. Please use a normal seed instead!" };
-        }
-
-        //Try to resolve the distribution file by reading it into memory
-        console.log("Read Plando JSON file: " + plandoFile.name);
-
-        let plandoFileJSON;
-
-        try {
-          plandoFileJSON = await this.readFileIntoMemoryWeb(plandoFile, false);
-        }
-        catch (ex) {
-          throw { error: "An error occurred during the loading of the plandomizer file! Please try to enter it again." };
-        }
-
-        if (!plandoFileJSON || plandoFileJSON.length < 1) {
-          throw { error: "The plandomizer file specified is not valid!" };
-        }
-
-        if (plandoFileJSON.length > 500000) { //Impose size limit to avoid server overload
-          throw { error: "The plandomizer file specified is too big! The maximum file size allowed is 500 KB." };
-        }
-
-        //Test JSON parse it
-        try {
-          let plandoFileParsed = JSON.parse(plandoFileJSON);
-
-          if (!plandoFileParsed || Object.keys(plandoFileParsed).length < 1) {
-            throw { error: "The plandomizer file specified is not valid JSON! Please verify the syntax." };
+      try {
+        plandoFileSeed = await this.readPlandoFileIntoMemoryWeb("distribution_file", setting.text);
+      }
+      catch (ex) {
+        switch (ex.error) {
+          case "file_extension_was_rom": {
+            throw { error_rom_in_plando: "Your Ocarina of Time ROM doesn't belong in a plandomizer setting. This entirely optional setting is used to plan out seeds before generation by manipulating spoiler log files. If you want to generate a normal seed instead, please click YES!", type: "distribution_file" };
+          }
+          default: {
+            //Bubble error upwards
+            throw ex;
           }
         }
-        catch (err) {
-          console.error(err);
-          throw { error: "The plandomizer file specified is not valid JSON! Please verify the syntax. Detail: " + err.message };
-        }
-
-        plandoFile = plandoFileJSON;
       }
-      else {
-        plandoFile = null;
+    }
+
+    //Plando Cosmetics Logic
+    let plandoFileCosmetics = null;
+    if (this.generator_settingsMap["enable_cosmetic_file"]) {
+
+      let setting = this.findSettingByName("cosmetic_file");
+
+      try {
+        plandoFileCosmetics = await this.readPlandoFileIntoMemoryWeb("cosmetic_file", setting.text);
+      }
+      catch (ex) {
+        switch (ex.error) {
+          case "file_extension_was_rom": {
+            throw { error_rom_in_plando: "Your Ocarina of Time ROM doesn't belong in a plandomizer setting. This entirely optional setting is used to give you more control over your cosmetic and sound settings. If you want to generate a normal seed with regular cosmetics instead, please click YES!", type: "cosmetic_file" };
+          }
+          default: {
+            //Bubble error upwards
+            throw ex;
+          }
+        }
       }
     }
 
@@ -1131,12 +1257,21 @@ export class GUIGlobal {
     }
 
     //Add distribution file back into map as string if available, else clear it
-    if (plandoFile) {
-      settingsFile["distribution_file"] = plandoFile;
+    if (plandoFileSeed) {
+      settingsFile["distribution_file"] = plandoFileSeed;
     }
     else {
       settingsFile["enable_distribution_file"] = false;
       settingsFile["distribution_file"] = "";
+    }
+
+    //Add cosmetics plando file back into map as string if available, else clear it
+    if (plandoFileCosmetics) {
+      settingsFile["cosmetic_file"] = plandoFileCosmetics;
+    }
+    else {
+      settingsFile["enable_cosmetic_file"] = false;
+      settingsFile["cosmetic_file"] = "";
     }
 
     if (raceSeed) {
@@ -1156,6 +1291,20 @@ export class GUIGlobal {
       delete settingsFile["seed"];
     }
 
+    //If spoiler log creation was intentionally disabled, warn user one time about the consequences
+    try {
+      let spoilerLogWarningSeen = localStorage.getItem("spoilerLogWarningSeen");
+
+      if ((!spoilerLogWarningSeen || spoilerLogWarningSeen == "false") && settingsFile["create_spoiler"] == false) {
+        localStorage.setItem("spoilerLogWarningSeen", JSON.stringify(true));
+        throw { error_spoiler_log_disabled: "Generating a seed without a spoiler log means you won't be able to receive any help in case you get stuck! Would you rather generate a seed WITH a spoiler log?" };
+      }
+    }
+    catch (err) { //Bubble through in case the warning should be displayed, ignore if local storage is not available
+      if (err.hasOwnProperty('error_spoiler_log_disabled'))
+        throw err;
+    }
+
     console.log(settingsFile);
     console.log("Race Seed:", raceSeed);
 
@@ -1173,17 +1322,52 @@ export class GUIGlobal {
     }
   }
 
-  patchROMWeb() { //Web only
- 
+  async patchROMWeb() { //Web only
+
+    //Plando Cosmetics Logic
+    let plandoFileCosmetics = null;
+    if (this.generator_settingsMap["enable_cosmetic_file"]) {
+
+      try {
+        plandoFileCosmetics = await this.readPlandoFileIntoMemoryWeb("cosmetic_file", "Cosmetic Plandomizer File");
+      }
+      catch (ex) {
+        switch (ex.error) {
+          case "file_extension_was_rom": {
+            throw { error_rom_in_plando: "Your Ocarina of Time ROM doesn't belong in a plandomizer setting. This entirely optional setting is used to give you more control over your cosmetic and sound settings. If you want to patch your ROM with regular cosmetics instead, please click YES!", type: "cosmetic_file" };
+          }
+          default: {
+            //Bubble error upwards
+            throw ex;
+          }
+        }
+      }
+    }
+
     let settingsFile = this.createSettingsFileObject(true, false, false, true);
 
     if (!settingsFile) {
-      return;
+      throw { error: "The patching was aborted due to previous errors!" };
     }
 
-    if (typeof (<any>window).patchROM === "function") //Try to call patchROM function on the DOM
-      (<any>window).patchROM(5, settingsFile); //Patch Version 5
-    else
+    //Add cosmetics plando file back into map as string if available, else clear it
+    if (plandoFileCosmetics) {
+      settingsFile["cosmetic_file"] = plandoFileCosmetics;
+    }
+    else {
+      settingsFile["enable_cosmetic_file"] = false;
+      settingsFile["cosmetic_file"] = "";
+    }
+
+    if (typeof (<any>window).patchROM === "function") { //Try to call patchROM function on the DOM
+      //Delay this so the async function can return early with "success"
+      setTimeout(() => {
+        (<any>window).patchROM(5, settingsFile); //Patch Version 5
+      }, 0);
+    }
+    else {
       console.error("[patchROMWeb] Patcher not available!");
+      throw { error: "Patcher not available!" };
+    }
   }
 }

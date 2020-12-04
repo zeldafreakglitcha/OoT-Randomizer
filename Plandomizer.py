@@ -8,7 +8,7 @@ from functools import reduce
 from collections import defaultdict
 
 from Fill import FillError
-from EntranceShuffle import EntranceShuffleError, change_connections, confirm_replacement, validate_worlds
+from EntranceShuffle import EntranceShuffleError, change_connections, confirm_replacement, validate_world, check_entrances_compatibility
 from Hints import gossipLocations, GossipText
 from Item import ItemFactory, ItemIterator, IsItem
 from ItemPool import item_groups, get_junk_item
@@ -18,7 +18,7 @@ from Search import Search
 from Spoiler import HASH_ICONS
 from version import __version__
 from Utils import random_choices
-from JSONDump import dump_obj, CollapseList, CollapseDict, AllignedDict, SortedDict
+from JSONDump import dump_obj, CollapseList, CollapseDict, AlignedDict, SortedDict
 import StartingItems
 
 
@@ -169,10 +169,10 @@ class EntranceRecord(SimpleRecord({'region': None, 'origin': None})):
 
     @staticmethod
     def from_entrance(entrance):
-        if entrance.type in ['Overworld', 'OwlDrop']:
-            origin_name = entrance.replaces.parent_region.name
-        else:
+        if entrance.replaces.primary and entrance.replaces.type in ('Interior', 'SpecialInterior', 'Grotto', 'Grave'):
             origin_name = None
+        else:
+            origin_name = entrance.replaces.parent_region.name
         return EntranceRecord({
             'region': entrance.connected_region.name,
             'origin': origin_name,
@@ -311,7 +311,7 @@ class WorldDistribution(object):
             self.give_item('Deku Nuts', 99)
 
 
-    def pool_remove_item(self, pools, item_name, count, world_id=None, use_base_pool=True, ignore_pools=None):
+    def pool_remove_item(self, pools, item_name, count, world_id=None, use_base_pool=True):
         removed_items = []
 
         base_remove_matcher = pattern_matcher(item_name)
@@ -322,7 +322,7 @@ class WorldDistribution(object):
             predicate = lambda item: item.world.id == world_id and remove_matcher(item.name)
 
         for i in range(count):
-            removed_item = pull_random_element(pools, predicate, ignore_pools=ignore_pools)
+            removed_item = pull_random_element(pools, predicate)
             if removed_item is None:
                 if not use_base_pool:
                     if IsItem(item_name):
@@ -444,10 +444,7 @@ class WorldDistribution(object):
     def collect_starters(self, state):
         for (name, record) in self.starting_items.items():
             for _ in range(record.count):
-                try:
-                    item = ItemFactory("Bottle" if name == "Bottle with Milk (Half)" else name)
-                except KeyError:
-                    continue
+                item = ItemFactory("Bottle" if name == "Bottle with Milk (Half)" else name)
                 state.collect(item)
 
 
@@ -495,7 +492,7 @@ class WorldDistribution(object):
                     raise RuntimeError('No entrance found to replace with %s that leads to %s in world %d' % 
                                                 (matched_entrance, target_region, self.id + 1))
 
-                if matched_entrance.type in ['Overworld', 'OwlDrop']:
+                if record.origin:
                     target_parent = record.origin
                     try:
                         matched_target = next(filter(lambda target: target.replaces.parent_region.name == target_parent, matched_targets_to_region))
@@ -510,23 +507,23 @@ class WorldDistribution(object):
                     raise RuntimeError('Entrance leading to %s from %s is already shuffled in world %d' % 
                                             (target_region, target_parent, self.id + 1))
 
-                change_connections(matched_entrance, matched_target)
-
                 try:
-                    validate_worlds(worlds, None, locations_to_ensure_reachable, itempool)
+                    check_entrances_compatibility(matched_entrance, matched_target)
+                    change_connections(matched_entrance, matched_target)
+                    validate_world(matched_entrance.world, worlds, None, locations_to_ensure_reachable, itempool)
                 except EntranceShuffleError as error:
                     raise RuntimeError('Cannot connect %s To %s in world %d (Reason: %s)' % 
-                                            (matched_entrance, matched_entrance.connected_region, self.id + 1, error))
+                                            (matched_entrance, matched_entrance.connected_region or matched_target.connected_region, self.id + 1, error))
 
                 confirm_replacement(matched_entrance, matched_target)
 
             if not entrance_found:
                 raise RuntimeError('Entrance does not belong to a pool of shuffled entrances in world %d: %s' % (self.id + 1, name))
 
-
     def fill_bosses(self, world, prize_locs, prizepool):
         count = 0
-        for (name, record) in pattern_dict_items(self.locations, prizepool):
+        used_items = []
+        for (name, record) in pattern_dict_items(self.locations):
             boss = pull_item_or_location([prize_locs], world, name)
             if boss is None:
                 try:
@@ -537,8 +534,16 @@ class WorldDistribution(object):
                     raise RuntimeError('Boss or already placed in world %d: %s' % (world.id + 1, name))
                 else:
                     continue
+
             if record.player is not None and (record.player - 1) != self.id:
                 raise RuntimeError('A boss can only give rewards in its own world')
+
+            valid_items = get_valid_items_from_record(prizepool, used_items, record)
+            if valid_items:  # Choices still available in the item pool, choose one, mark it as a used item
+                record.item = random_choices(valid_items)[0]
+                if used_items is not None:
+                    used_items.append(record.item)
+
             reward = pull_item_or_location([prizepool], world, record.item)
             if reward is None:
                 if record.item not in item_groups['DungeonReward']:
@@ -551,9 +556,8 @@ class WorldDistribution(object):
             world.push_item(boss, reward, True)
         return count
 
-
     def fill(self, window, worlds, location_pools, item_pools):
-        """Fills the world with restrictions defined in a plandomizer JSON file.
+        """Fills the world with restrictions defined in a plandomizer JSON distribution file.
 
         :param window:
         :param worlds: A list of the world objects that define the rules of each game world.
@@ -572,11 +576,27 @@ class WorldDistribution(object):
         world = worlds[self.id]
         locations = {}
         if self.locations:
-            locations = {loc: self.locations[loc] for loc in random.sample(self.locations.keys(), len(self.locations))}
+            locations = {loc: self.locations[loc] for loc in random.sample(sorted(self.locations), len(self.locations))}
         used_items = []
-        for (location_name, record) in pattern_dict_items(locations, world.itempool, used_items):
+        for (location_name, record) in pattern_dict_items(locations):
             if record.item is None:
                 continue
+
+            valid_items = get_valid_items_from_record(world.itempool, used_items, record)
+            if not valid_items:
+                # Item pool values exceeded. Remove limited items from the list and choose a random value from it
+                limited_items = ['Weird Egg', '#AdultTrade', '#Bottle']
+                if isinstance(record.item, list):
+                    allowed_choices = []
+                    for item in record.item:
+                        if item in limited_items or item in item_groups['AdultTrade'] or item in item_groups['Bottle']:
+                            continue
+                        allowed_choices.append(item)
+                    record.item = random_choices(allowed_choices)[0]
+            else:  # Choices still available in item pool, choose one, mark it as a used item
+                record.item = random_choices(valid_items)[0]
+                if used_items is not None:
+                    used_items.append(record.item)
 
             player_id = self.id if record.player is None else record.player - 1
 
@@ -597,80 +617,19 @@ class WorldDistribution(object):
             if record.item in item_groups['DungeonReward']:
                 raise RuntimeError('Cannot place dungeon reward %s in world %d in location %s.' % (record.item, self.id + 1, location_name))
 
-            if record.item == '#Junk' and location.type == 'Song' and not world.shuffle_song_items:
+            if record.item == '#Junk' and location.type == 'Song' and world.shuffle_song_items == 'song':
                 record.item = '#JunkSong'
 
             ignore_pools = None
             is_invert = pattern_matcher(record.item)('!')
-            if is_invert and location.type != 'Song' and not world.shuffle_song_items:
+            if is_invert and location.type != 'Song' and world.shuffle_song_items == 'song':
                 ignore_pools = [2]
-            if is_invert and location.type == 'Song' and not world.shuffle_song_items:
+            if is_invert and location.type == 'Song' and world.shuffle_song_items == 'song':
                 ignore_pools = [i for i in range(len(item_pools)) if i != 2]
+            if location.type == 'Shop':
+                ignore_pools = [i for i in range(len(item_pools)) if i != 0]
 
-            try:
-                if record.item == "#Bottle":
-                    try:
-                        item = self.pool_replace_item(item_pools, "#Bottle", player_id, record.item, worlds)
-                        # Update item_pool
-                        if item.name not in self.item_pool:
-                            self.item_pool[item.name] = ItemPoolRecord()
-                        else:
-                            self.item_pool[item.name].count += 1
-                    except KeyError:
-                        raise RuntimeError(
-                            'Too many bottles were added to world %d, and not enough bottles are available in the item pool to be removed.' % (
-                                        self.id + 1))
-                elif record.item == "#AdultTrade":
-                    try:
-                        item = self.pool_replace_item(item_pools, "#AdultTrade", player_id, record.item, worlds)
-                        # Update item_pool
-                        if item.name not in self.item_pool:
-                            self.item_pool[item.name] = ItemPoolRecord()
-                        else:
-                            self.item_pool[item.name].count += 1
-                    except KeyError:
-                        raise RuntimeError(
-                            'Too many adult trade items were added to world %d, and not enough adult trade items are available in the item pool to be removed.' % (
-                                        self.id + 1))
-                else:
-                    item = self.pool_remove_item(item_pools, record.item, 1, world_id=player_id, ignore_pools=ignore_pools)[0]
-            except KeyError:
-                if location.type == 'Shop' and "Buy" in record.item:
-                    try:
-                        self.pool_remove_item([item_pools[0]], "Buy *", 1, world_id=player_id)
-                        item = ItemFactory([record.item], world=world)[0]
-                    except KeyError:
-                        raise RuntimeError('Too many shop buy items were added to world %d, and not enough shop buy items are available in the item pool to be removed.' % (self.id + 1))
-                elif record.item in item_groups['Bottle']:
-                    try:
-                        item = self.pool_replace_item(item_pools, "#Bottle", player_id, record.item, worlds)
-                    except KeyError:
-                        raise RuntimeError('Too many bottles were added to world %d, and not enough bottles are available in the item pool to be removed.' % (self.id + 1))
-                elif record.item in item_groups['AdultTrade']:
-                    try:
-                        item = self.pool_replace_item(item_pools, "#AdultTrade", player_id, record.item, worlds)
-                    except KeyError:
-                        raise RuntimeError('Too many adult trade items were added to world %d, and not enough adult trade items are available in the item pool to be removed.' % (self.id + 1))
-                elif record.item == "Weird Egg":
-                    # If Letter has not been shown to guard before obtaining a second weird egg a softlock can occur
-                    # if there are important items at deku theater or an important location locked behind the gate
-                    # or if Keaton Mask gets overwritten before giving it to the guard.
-                    try:
-                        item = self.pool_replace_item(item_pools, "Weird Egg", player_id, record.item, worlds)
-                    except KeyError:
-                        raise RuntimeError('Weird Egg already placed in World %d.' % (self.id + 1))
-                else:
-                    try:
-                        item = self.pool_replace_item(item_pools, "#Junk", player_id, record.item, worlds)
-                    except KeyError:
-                        raise RuntimeError('Too many items were added to world %d, and not enough junk is available to be removed.' % (self.id + 1))
-                # Update item_pool
-                if item.name not in self.item_pool:
-                    self.item_pool[item.name] = ItemPoolRecord()
-                else:
-                    self.item_pool[item.name].count += 1
-            except IndexError:
-                raise RuntimeError('Unknown item %s being placed on location %s in world %d.' % (record.item, location, self.id + 1))
+            item = self.get_item(ignore_pools, item_pools, location, player_id, record, worlds)
 
             if record.price is not None and item.type != 'Shop':
                 location.price = record.price
@@ -687,6 +646,95 @@ class WorldDistribution(object):
             window.fillcount += 1
             window.update_progress(5 + ((window.fillcount / window.locationcount) * 30))
 
+    def get_item(self, ignore_pools, item_pools, location, player_id, record, worlds):
+        """Get or create the item specified by the record and replace something in the item pool with it
+
+        :param ignore_pools: Pools to not replace items in
+        :param item_pools: A list containing all of the item pools.
+        :param location: Location record currently being assigned an item
+        :param player_id: Integer representing the current player's ID number
+        :param record: Item record from the distribution file to assign to a location
+        :param worlds: A list of the world objects that define the rules of each game world.
+        :return: item
+        """
+        world = worlds[player_id]
+        if ignore_pools:
+            pool = [pool for i, pool in enumerate(item_pools) if i not in ignore_pools]
+        else:
+            pool = item_pools
+        try:
+            if record.item == "#Bottle":
+                try:
+                    item = self.pool_replace_item(pool, "#Bottle", player_id, record.item, worlds)
+                    # Update item_pool
+                    if item.name not in self.item_pool:
+                        self.item_pool[item.name] = ItemPoolRecord()
+                    else:
+                        self.item_pool[item.name].count += 1
+                except KeyError:
+                    raise RuntimeError(
+                        'Too many bottles were added to world %d, and not enough bottles are available in the item pool to be removed.' % (
+                                self.id + 1))
+            elif record.item == "#AdultTrade":
+                try:
+                    item = self.pool_replace_item(pool, "#AdultTrade", player_id, record.item, worlds)
+                    # Update item_pool
+                    if item.name not in self.item_pool:
+                        self.item_pool[item.name] = ItemPoolRecord()
+                    else:
+                        self.item_pool[item.name].count += 1
+                except KeyError:
+                    raise RuntimeError(
+                        'Too many adult trade items were added to world %d, and not enough adult trade items are available in the item pool to be removed.' % (
+                                self.id + 1))
+            else:
+                item = self.pool_remove_item(pool, record.item, 1, world_id=player_id)[0]
+        except KeyError:
+            if location.type == 'Shop' and "Buy" in record.item:
+                try:
+                    self.pool_remove_item(pool, "Buy *", 1, world_id=player_id)
+                    item = ItemFactory([record.item], world=world)[0]
+                except KeyError:
+                    raise RuntimeError(
+                        'Too many shop buy items were added to world %d, and not enough shop buy items are available in the item pool to be removed.' % (
+                                    self.id + 1))
+            elif record.item in item_groups['Bottle']:
+                try:
+                    item = self.pool_replace_item(pool, "#Bottle", player_id, record.item, worlds)
+                except KeyError:
+                    raise RuntimeError(
+                        'Too many bottles were added to world %d, and not enough bottles are available in the item pool to be removed.' % (
+                                    self.id + 1))
+            elif record.item in item_groups['AdultTrade']:
+                try:
+                    item = self.pool_replace_item(pool, "#AdultTrade", player_id, record.item, worlds)
+                except KeyError:
+                    raise RuntimeError(
+                        'Too many adult trade items were added to world %d, and not enough adult trade items are available in the item pool to be removed.' % (
+                                    self.id + 1))
+            elif record.item == "Weird Egg":
+                # If Letter has not been shown to guard before obtaining a second weird egg a softlock can occur
+                # if there are important items at deku theater or an important location locked behind the gate
+                # or if Keaton Mask gets overwritten before giving it to the guard.
+                try:
+                    item = self.pool_replace_item(pool, "Weird Egg", player_id, record.item, worlds)
+                except KeyError:
+                    raise RuntimeError('Weird Egg already placed in World %d.' % (self.id + 1))
+            else:
+                try:
+                    item = self.pool_replace_item(item_pools, "#Junk", player_id, record.item, worlds)
+                except KeyError:
+                    raise RuntimeError(
+                        'Too many items were added to world %d, and not enough junk is available to be removed.' % (self.id + 1))
+            # Update item_pool
+            if item.name not in self.item_pool:
+                self.item_pool[item.name] = ItemPoolRecord()
+            else:
+                self.item_pool[item.name].count += 1
+        except IndexError:
+            raise RuntimeError(
+                'Unknown item %s being placed on location %s in world %d.' % (record.item, location, self.id + 1))
+        return item
 
     def cloak(self, worlds, location_pools, model_pools):
         for (name, record) in pattern_dict_items(self.locations):
@@ -745,11 +793,26 @@ class WorldDistribution(object):
 
 class Distribution(object):
     def __init__(self, settings, src_dict=None):
-        if src_dict is None:
-            src_dict = {}
+        self.src_dict = src_dict or {}
         self.settings = settings
         self.world_dists = [WorldDistribution(self, id) for id in range(settings.world_count)]
-        self.update(src_dict, update_all=True)
+        # One-time init
+        update_dict = {
+            'file_hash': (self.src_dict.get('file_hash', []) + [None, None, None, None, None])[0:5],
+            'playthrough': None,
+            'entrance_playthrough': None,
+            '_settings': self.src_dict.get('settings', {}),
+        }
+
+        self.settings.__dict__.update(update_dict['_settings'])
+        if 'settings' in self.src_dict:
+            self.src_dict['_settings'] = self.src_dict['settings']
+            del self.src_dict['settings']
+
+        self.__dict__.update(update_dict)
+
+        # Init we have to do every time we retry
+        self.reset()
 
 
     # adds the location entry only if there is no record for that location already
@@ -792,41 +855,33 @@ class Distribution(object):
             raise RuntimeError('Too many Triforce Pieces in starting items. There should be at most %d and there are %d.' % (worlds[0].triforce_goal - 1, total_starting_count))
 
 
-    def update(self, src_dict, update_all=False):
-        update_dict = {
-            'file_hash': (src_dict.get('file_hash', []) + [None, None, None, None, None])[0:5],
-            'playthrough': None,
-            'entrance_playthrough': None,
-            '_settings': src_dict.get('settings', {}),
-        }
+    def reset(self):
+        for world in self.world_dists:
+            world.update({}, update_all=True)
 
-        self.settings.__dict__.update(update_dict['_settings'])
-        if 'settings' in src_dict:
-            src_dict['_settings'] = src_dict['settings']
-            del src_dict['settings']
-
-        if update_all:
-            self.__dict__.update(update_dict)
-            for world in self.world_dists:
-                world.update({}, update_all=True)
-        else:
-            for k in src_dict:
-                setattr(self, k, update_dict[k])
-
-
-        if 'starting_items' not in src_dict:
+        if 'starting_items' not in self.src_dict:
             self.populate_starting_items_from_settings()
 
+        world_names = ['World %d' % (i + 1) for i in range(len(self.world_dists))]
+
         for k in per_world_keys:
-            if k in src_dict:
-                for world_id, world in enumerate(self.world_dists):
-                    world_key = 'World %d' % (world_id + 1)
-                    if world_key in src_dict[k]:
-                        world.update({k: src_dict[k][world_key]})
-                        del src_dict[k][world_key]
-                for world in self.world_dists:
-                    if src_dict[k]:
-                        world.update({k: src_dict[k]})
+            # Anything starting with ':' is output-only and we ignore it in world.update anyway.
+            if k in self.src_dict and k[0] != ':':
+                if isinstance(self.src_dict[k], dict):
+                    # For each entry here of the form 'World %d', apply that entry to that world.
+                    # If there are any entries that aren't of this form,
+                    # apply them all to each world.
+                    for world_id, world_name in enumerate(world_names):
+                        if world_name in self.src_dict[k]:
+                            self.world_dists[world_id].update({k: self.src_dict[k][world_name]})
+                    src_all = {key: val for key, val in self.src_dict[k].items() if key not in world_names}
+                    if src_all:
+                        for world in self.world_dists:
+                            world.update({k: src_all})
+                else:
+                    # Since it's not by world, apply to all worlds.
+                    for world in self.world_dists:
+                        world.update({k: self.src_dict[k]})
 
 
     def populate_starting_items_from_settings(self):
@@ -838,14 +893,14 @@ class Distribution(object):
                 if not item.special:
                     data[item.itemname] += 1
                 else:
-                    if item.itemname == 'Bottle with Letter' and self.settings.zora_fountain != 'open':
-                        data['Bottle with Letter'] = 1
-                    elif item.itemname in ['Bottle', 'Bottle with Letter']:
+                    if item.itemname == 'Rutos Letter' and self.settings.zora_fountain != 'open':
+                        data['Rutos Letter'] = 1
+                    elif item.itemname in ['Bottle', 'Rutos Letter']:
                         data['Bottle'] += 1
                     else:
                         raise KeyError("invalid special item: {}".format(item.itemname))
             else:
-                raise KeyError("invalid starting item: {}".format(item.itemname))
+                raise KeyError("invalid starting item: {}".format(itemsetting))
 
         # add ammo
         for item in list(data.keys()):
@@ -876,6 +931,7 @@ class Distribution(object):
             'file_hash': CollapseList(self.file_hash),
             ':seed': self.settings.seed,
             ':settings_string': self.settings.settings_string,
+            ':enable_distribution_file': self.settings.enable_distribution_file,
             'settings': self.settings.to_json(),
         }
 
@@ -890,7 +946,7 @@ class Distribution(object):
                 self_dict.update({k: world_dist_dicts[0][k] for k in per_world_keys})
 
             if self.playthrough is not None:
-                self_dict[':playthrough'] = AllignedDict({
+                self_dict[':playthrough'] = AlignedDict({
                     sphere_nr: SortedDict({
                         name: record.to_json() for name, record in sphere.items()
                     })
@@ -898,7 +954,7 @@ class Distribution(object):
                 }, depth=2)
 
             if self.entrance_playthrough is not None and len(self.entrance_playthrough) > 0:
-                self_dict[':entrance_playthrough'] = AllignedDict({
+                self_dict[':entrance_playthrough'] = AlignedDict({
                     sphere_nr: SortedDict({
                         name: record.to_json() for name, record in sphere.items()
                     })
@@ -1010,9 +1066,9 @@ def is_pattern(pattern):
 def pattern_matcher(pattern):
     if isinstance(pattern, list):
         pattern_list = []
-        for pattern_item in enumerate(pattern):
+        for pattern_item in pattern:
             pattern_list.append(pattern_matcher(pattern_item))
-        return reduce(lambda acc, sub_matcher: lambda item: sub_matcher(item) or acc(item), pattern_list, lambda: False)
+        return reduce(lambda acc, sub_matcher: lambda item: sub_matcher(item) or acc(item), pattern_list, lambda _: False)
 
     invert = pattern.startswith('!')
     if invert:
@@ -1037,59 +1093,43 @@ def pattern_matcher(pattern):
             return lambda s: invert != (s == pattern)
 
 
-def pattern_dict_items(pattern_dict, itempool=None, used_items=None):
+def pattern_dict_items(pattern_dict):
+    """Retrieve a location by pattern.
+
+    :param pattern_dict: the location dictionary. Capable of containing a pattern.
+    :return: tuple:
+                0: the name of the location
+                1: the item to place at the location
+    """
+    # TODO: This has the same issue with the invert pattern as items do.
+    #  It pulls randomly(?) from all locations instead of ones that make sense.
+    #  e.g. "!Queen Gohma" results in "KF Kokiri Sword Chest"
     for (key, value) in pattern_dict.items():
-        if hasattr(value, 'item') and isinstance(value.item, list):
-            if itempool is not None:
-                valid_items = []
-                pool_group_items = []
-                for item in itempool:
-                    if item.name in value.item:
-                        valid_items.append(item.name)
-                    else:
-                        for group in item_groups:
-                            if '#' + group in value.item:
-                                if item.name in item_groups[group]:
-                                    pool_group_items.append(item.name)
-                if used_items is not None:
-                    for used_item in used_items:
-                        if used_item in valid_items:
-                            valid_items.remove(used_item)
-                        else:
-                            for group in item_groups:
-                                if group == "AdultTrade":
-                                    # Special handling for AdultTrade item
-                                    if used_item in item_groups[group]:
-                                        pool_group_items = [i for i in pool_group_items if i not in item_groups[group]]
-                                        continue
-                                for item in item_groups[group]:
-                                    if '#' + group in value.item and used_item == item and item in pool_group_items:
-                                        pool_group_items.remove(item)
-                                        break
-                    valid_items.extend(pool_group_items)
-            else:
-                valid_items = value.item
-            if not valid_items and used_items is None:
-                continue
-            elif not valid_items and used_items is not None:
-                limited_items = ['Weird Egg', '#AdultTrade', '#Bottle']
-                value.item = [v for v in value.item
-                              if (v not in limited_items
-                                  and v not in item_groups['AdultTrade']
-                                  and v not in item_groups['Bottle'])]
-                value.item = random_choices(value.item)[0]
-            else:
-                value.item = random_choices(valid_items)[0]
-                if used_items is not None:
-                    used_items.append(value.item)
-        elif used_items is not None:
-            used_items.append(value.item)
         if is_pattern(key):
             pattern = lambda loc: pattern_matcher(key)(loc.name)
             for location in LocationIterator(pattern):
-                yield(location.name, value)
+                yield location.name, value
         else:
-            yield (key, value)
+            yield key, value
+
+
+def get_valid_items_from_record(itempool, used_items, record):
+    """Gets items that are valid for placement.
+
+    :param itempool: a list of the item pool to search through for the record
+    :param used_items: a list of the items already used from the item pool
+    :param record: the item record to choose from
+    :return: list:
+                All items in the record that exist in the item pool but have not already been used. Can be empty.
+    """
+    predicate = pattern_matcher(record.item)
+    valid_items = [item.name for item in itempool if predicate(item.name)]
+    if used_items is not None:
+        for used_item in used_items:
+            if used_item in valid_items:
+                valid_items.remove(used_item)
+
+    return valid_items
 
 
 def pull_first_element(pools, predicate=lambda k:True, remove=True):
@@ -1102,11 +1142,8 @@ def pull_first_element(pools, predicate=lambda k:True, remove=True):
     return None
 
 
-def pull_random_element(pools, predicate=lambda k:True, remove=True, ignore_pools=None):
-    if ignore_pools:
-        candidates = [(element, pool) for i, pool in enumerate(pools) if i not in ignore_pools for element in pool if predicate(element)]
-    else:
-        candidates = [(element, pool) for pool in pools for element in pool if predicate(element)]
+def pull_random_element(pools, predicate=lambda k:True, remove=True):
+    candidates = [(element, pool) for pool in pools for element in pool if predicate(element)]
     if len(candidates) == 0:
         return None
     element, pool = random.choice(candidates)
@@ -1129,8 +1166,17 @@ def pull_all_elements(pools, predicate=lambda k:True, remove=True):
     return elements
 
 
-# Finds and removes (unless told not to do so) an item or location matching the criteria from a list of pools.
 def pull_item_or_location(pools, world, name, remove=True):
+    """Finds and removes (unless told not to do so) an item or location matching the criteria from a list of pools.
+
+    :param pools: the item pools to pull from
+    :param world: the world the pools belong to
+    :param name: the name of the element to pull from the pools
+    :param remove:
+            True: Remove the element pulled from the pool
+            False: Keep element pulled in the pool
+    :return: the element pulled from the pool
+    """
     if is_pattern(name):
         matcher = pattern_matcher(name)
         return pull_random_element(pools, lambda e: e.world is world and matcher(e.name), remove)

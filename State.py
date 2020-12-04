@@ -1,10 +1,7 @@
-from collections import Counter, defaultdict
+from collections import Counter
 import copy
-from functools import partial
-import itertools
 
 from Item import ItemInfo
-from Search import Search
 from Region import Region, TimeOfDay
 
 
@@ -15,6 +12,7 @@ class State(object):
         self.prog_items = Counter()
         self.world = parent
         self.search = None
+        self._won = self.won_triforce_hunt if self.world.triforce_hunt else self.won_normal
 
 
     ## Ensure that this will always have a value
@@ -38,6 +36,18 @@ class State(object):
         return location.item.name
 
 
+    def won(self):
+        return self._won()
+
+
+    def won_triforce_hunt(self):
+        return self.has('Triforce Piece', self.world.triforce_count)
+
+
+    def won_normal(self):
+        return self.has('Triforce')
+
+
     def has(self, item, count=1):
         return self.prog_items[item] >= count
 
@@ -50,13 +60,17 @@ class State(object):
         return all(map(self.prog_items.__contains__, items))
 
 
+    def count_of(self, items):
+        return len(list(filter(self.prog_items.__contains__, items)))
+
+
     def item_count(self, item):
         return self.prog_items[item]
 
 
     def has_bottle(self, **kwargs):
         # Extra Ruto's Letter are automatically emptied
-        return self.has_any_of(ItemInfo.bottles) or self.has('Bottle with Letter', 2)
+        return self.has_any_of(ItemInfo.bottles) or self.has('Rutos Letter', 2)
 
 
     def has_hearts(self, count):
@@ -71,6 +85,17 @@ class State(object):
             + self.item_count('Piece of Heart') // 4
             + 3 # starting hearts
         )
+
+    def has_medallions(self, count):
+        return self.count_of(ItemInfo.medallions) >= count
+
+
+    def has_stones(self, count):
+        return self.count_of(ItemInfo.stones) >= count
+
+
+    def has_dungeon_rewards(self, count):
+        return (self.count_of(ItemInfo.medallions) + self.count_of(ItemInfo.stones)) >= count
 
 
     def had_night_start(self):
@@ -125,48 +150,3 @@ class State(object):
         self.__dict__.update(state)
 
 
-    @staticmethod
-    def can_beat_game(state_list):
-        return Search(state_list).can_beat_game()
-
-
-    @staticmethod
-    def update_required_items(spoiler):
-        worlds = spoiler.worlds
-
-        # get list of all of the progressive items that can appear in hints
-        # all_locations: all progressive items. have to collect from these
-        # item_locations: only the ones that should appear as "required"/WotH
-        all_locations = [location for world in worlds for location in world.get_filled_locations()]
-        # Set to test inclusion against
-        item_locations = {location for location in all_locations if location.item.majoritem and not location.locked and location.item.name != 'Triforce Piece'}
-
-        # if the playthrough was generated, filter the list of locations to the
-        # locations in the playthrough. The required locations is a subset of these
-        # locations. Can't use the locations directly since they are location to the
-        # copied spoiler world, so must compare via name and world id
-        if spoiler.playthrough:
-            translate = lambda loc: worlds[loc.world.id].get_location(loc.name)
-            spoiler_locations = set(map(translate, itertools.chain.from_iterable(spoiler.playthrough.values())))
-            item_locations &= spoiler_locations
-
-        required_locations = []
-
-        search = Search([world.state for world in worlds])
-        for location in search.iter_reachable_locations(all_locations):
-            # Try to remove items one at a time and see if the game is still beatable
-            if location in item_locations:
-                old_item = location.item
-                location.item = None
-                # copies state! This is very important as we're in the middle of a search
-                # already, but beneficially, has search it can start from
-                if not search.can_beat_game():
-                    required_locations.append(location)
-                location.item = old_item
-            search.state_list[location.item.world.id].collect(location.item)
-
-        # Filter the required location to only include location in the world
-        required_locations_dict = {}
-        for world in worlds:
-            required_locations_dict[world.id] = list(filter(lambda location: location.world.id == world.id, required_locations))
-        spoiler.required_locations = required_locations_dict

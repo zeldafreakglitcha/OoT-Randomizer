@@ -1,6 +1,7 @@
 import collections
 import logging
 from Location import DisableType
+from SaveContext import SaveContext
 from Search import Search
 from State import State
 
@@ -15,7 +16,7 @@ def set_rules(world):
     is_child = world.parser.parse_rule('is_child')
 
     for location in world.get_locations():
-        if not world.shuffle_song_items:
+        if world.shuffle_song_items == 'song':
             if location.type == 'Song':
                 # allow junk items, but songs must still have matching world
                 add_item_rule(location, lambda location, item: 
@@ -37,11 +38,14 @@ def set_rules(world):
         else:
             add_item_rule(location, lambda location, item: item.type != 'Shop')
 
-        if location.name == 'Forest Temple MQ First Chest' and world.shuffle_bosskeys == 'dungeon' and world.shuffle_smallkeys == 'dungeon' and world.tokensanity == 'off':
+        if world.skip_child_zelda and location.name == 'Song from Impa':
+            limit_to_itemset(location, SaveContext.giveable_items)
+
+        if location.name == 'Forest Temple MQ First Room Chest' and world.shuffle_bosskeys == 'dungeon' and world.shuffle_smallkeys == 'dungeon' and world.tokensanity == 'off':
             # This location needs to be a small key. Make sure the boss key isn't placed here.
             forbid_item(location, 'Boss Key (Forest Temple)')
 
-        if location.type == 'GossipStone' and world.hints == 'mask':
+        if location.type == 'HintStone' and world.hints == 'mask':
             location.add_rule(is_child)
 
         if location.name in world.always_hints:
@@ -78,6 +82,11 @@ def add_item_rule(spot, rule):
 def forbid_item(location, item_name):
     old_rule = location.item_rule
     location.item_rule = lambda loc, item: item.name != item_name and old_rule(loc, item)
+
+
+def limit_to_itemset(location, itemset):
+    old_rule = location.item_rule
+    location.item_rule = lambda loc, item: item.name in itemset and old_rule(loc, item)
 
 
 def item_in_locations(state, item, locations):
