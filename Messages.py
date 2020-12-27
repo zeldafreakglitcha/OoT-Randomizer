@@ -177,9 +177,9 @@ ITEM_MESSAGES = {
     0x00A4: "\x08\x13\x3BYou got the \x05\x42Kokiri Sword\x05\x40!\x01Use it to murder them.\x01All of them.",
     0x00A7: "\x08\x13\x01Now you can carry\x01many \x05\x41XD\x05\x40!\x01You can hold up to \x05\x4669\x05\x40 XD!",
     0x00A8: "\x08\x13\x01You can now carry even\x01more \x05\x41XD\x05\x40! You can carry\x01up to \x05\x46420\x05\x41 \x05\x40XD!",
-    0x00AD: "\x08\x13\x05You got \x05\x41Din's Tits\x05\x40!\x01Pleb taste if I say so.",
+    0x00AD: "\x08\x13\x05You got \x05\x41Din's Feet\x05\x40!\x01Perfection!",
     0x00AE: "\x08\x13\x0DYou got \x05\x42Farore's Ass\x05\x40!\x01Nice!",
-    0x00AF: "\x08\x13\x13You got \x05\x43Nayru's Feet\x05\x40!\x01Perfection!",
+    0x00AF: "\x08\x13\x13You got \x05\x43Nayru's Tits\x05\x40!\x01Peb taste if I say so!",
     0x00B4: "\x08You got a \x05\x41Chuck E Cheese Token\x05\x40!\x01You've collected \x05\x41\x19\x05\x40 tokens in total.",
     0x00B5: "\x08You destroyed a \x05\x41Gold Skulltula\x05\x40.\x01You got a token proving you \x01destroyed it!", #Unused
     0x00C2: "\x08\x13\x73You got a \x05\x41Piece of Heart\x05\x40!\x01God is dead. God wemains dead.\x01And we have kiwwed him.",
