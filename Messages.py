@@ -169,7 +169,7 @@ ITEM_MESSAGES = {
     0x0082: "\x08\x13\x6EYou obtained \x05\x43Fedora's Sapphire\x05\x40!\x01You feel euphoric!",
     0x0090: "\x08\x13\x00Now you can pick up \x01many \x05\x41Blunts\x05\x40!\x01You can carry up to \x05\x4620\x05\x40 of them!",
     0x0091: "\x08\x13\x00You can now pick up \x01even more \x05\x41Blunts\x05\x40!\x01You can carry up to \x05\x4630\x05\x40 of them!",
-    0x0097: "\x08\x13\x20You caught \x05\x41Edgar Allan Poe \x05\x40in a bottle!\x01Feed his cat while he's stuck.",
+    0x0097: "\x08\x13\x20You caught \x05\x41Little Chungus\x05\x40 in a bottle!",
     0x0098: "\x08\x13\x1AYou got \x05\x41Pon Pon Milk\x05\x40!\x01Why aren't you listening to Pon Pon?",
     0x0099: "\x08\x13\x1BYou found \x05\x41Ruto's Fan Fiction\x05\x40\x01in a bottle!\x01HE'S MINE!! MERCO'S MINE!\x04\x08\x13\x1BSHMINE! AND NO ONE CAN HAVE HIM!\x01BWAHAHAHAHAHAHA!!!....*ahem*",
     0x9099: "\x08\x13\x1BYou found \x05\x41Ruto's Fan Fiction\x05\x40\x01in a bottle!\x01HE'S MINE!! MERCO'S MINE!\x04\x08\x13\x1BSHMINE! AND NO ONE CAN HAVE HIM!\x01BWAHAHAHAHAHAHA!!!....*ahem*",
