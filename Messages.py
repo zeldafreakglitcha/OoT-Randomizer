@@ -174,7 +174,7 @@ ITEM_MESSAGES = {
     0x0099: "\x08\x13\x1BYou found \x05\x41Ruto's Fan Fiction\x05\x40\x01in a bottle!\x01HE'S MINE!! MERCO'S MINE!\x04\x08\x13\x1BSHMINE! AND NO ONE CAN HAVE HIM!\x01BWAHAHAHAHAHAHA!!!....*ahem*",
     0x9099: "\x08\x13\x1BYou found \x05\x41Ruto's Fan Fiction\x05\x40\x01in a bottle!\x01HE'S MINE!! MERCO'S MINE!\x04\x08\x13\x1BSHMINE! AND NO ONE CAN HAVE HIM!\x01BWAHAHAHAHAHAHA!!!....*ahem*",
     0x009A: "\x08\x13\x21You got a \x05\x41Vibe Egg\x05\x40!\x01Feels like there's something\x01moving inside!",
-    0x00A4: "\x08\x13\x3BYou got the \x05\x42Kokiri Sword\x05\x40!\x01Use it to murder them.\x01All of them.",
+    0x00A4: "\x08\x13\x3BYou got the \x05\x42Kokiri Sword\x05\x40!\x01Use it to murder them.\x01All of them.\x04\x08\x13\x3BWho are they going to\x01tell, the Deku Tree?",
     0x00A7: "\x08\x13\x01Now you can carry\x01many \x05\x41XD\x05\x40!\x01You can hold up to \x05\x4669\x05\x40 XD!",
     0x00A8: "\x08\x13\x01You can now carry even\x01more \x05\x41XD\x05\x40! You can carry\x01up to \x05\x46420\x05\x41 \x05\x40XD!",
     0x00AD: "\x08\x13\x05You got \x05\x41Din's Feet\x05\x40!\x01Perfection!",
