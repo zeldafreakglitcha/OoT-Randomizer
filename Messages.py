@@ -189,7 +189,7 @@ ITEM_MESSAGES = {
     0x00C6: "\x08\x13\x72You got a \x05\x41Heart Container\x05\x40!\x01What watew is thewe to\x01cwean ouwsewves?",
     0x00C7: "\x08\x13\x74You got the \x05\x41Boss Key\x05\x40!\x01zfg1 doesn't require this\x01but you do.",
     0x9002: "\x08\x01\x05\x43rip pogchamp\x05\x40...\x04\x08",
-    0x00CC: "\x08You got \x05\x435 Dollars\x05\x40!\x01Don't spend it on drugs.",
+    0x00CC: "\x08You got \x05\x435 Dollars\x05\x40!",
     0x00CD: "\x08\x13\x53You got the \x05\x43Silver Anal Bead\x05\x40!",
     0x00CE: "\x08\x13\x54You got the \x05\x43Golden Anal Bead\x05\x40!",
     0x00D1: "\x08\x06\x14You've learned \x01\x05\x42Song of Healing Backwards\x05\x40!",
@@ -207,7 +207,7 @@ ITEM_MESSAGES = {
     0x00E9: "\x08Your defensive power has been\x01enhanced! Easy mode is now selectable.",
     0x00F0: "\x08YOU ONLY HIT X MOTHA FUCKIN UP\x01YOU CAN'T DO IT ON THE GROUND\x01MOTHA FUCKER!\x04\x08THAT SHIT DON'T WORK!",
     0x00F1: "\x08LET'S START THIS MOTHA FUCKA OFF RIGHT!\x01AHHH! AHHH! OHHH OHH!\x01DROPPED THAT SHIT!",
-    0x00F2: "\x08IF YOU FUCK UP THE RHYTHM THE MOTHA\x01 FUCKIN COMBO WILL DROP\x01MOTHA FUCKER!",
+    0x00F2: "\x08You got \x05\x43200 Dollars\x05\x40!\x01Just from selling one foot pic!",
     0x00F9: "\x08\x13\x1EYou put a \x05\x41Big Chungus \x05\x40in a bottle!\x01Let's sell it at the \x05\x41Chungus Shop\x05\x40!\x01Something good might happen!",
     0x9003: "\x08You found a piece of the \x05\x41Cut Content\x05\x40!",
 }
